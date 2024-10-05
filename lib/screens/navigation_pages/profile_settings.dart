@@ -45,9 +45,9 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                   'Francis Oaquiera',
                   style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold),
                 ),
-                const Text('francisgerald.oaquiera.dl@domain.com'),
-                const Text('+639479637899'),
-                const SizedBox(height: 20.0),
+                // const Text('francisgerald.oaquiera.dl@domain.com'),
+                // const Text('+639479637899'),
+                // const SizedBox(height: 20.0),
                 Card(
                   color: Colors.white,
                   elevation: 3,
