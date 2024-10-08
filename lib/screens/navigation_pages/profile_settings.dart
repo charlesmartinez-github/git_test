@@ -214,7 +214,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                                 }));
                               },
                               child: const Text(
-                                'Notifications',
+                                'Send Feedback',
                                 style: TextStyle(
                                     color: Colors.black,
                                     fontWeight: FontWeight.normal),

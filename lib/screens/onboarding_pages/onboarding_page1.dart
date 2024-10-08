@@ -14,6 +14,7 @@ class OnboardingPage1 extends StatelessWidget {
       body: Container(
           margin: const EdgeInsets.only(left: 34.0, right: 34.0, top: 64.0),
           child:Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Container(
                 padding: const EdgeInsets.only(top: 80.0),

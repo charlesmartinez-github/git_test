@@ -21,7 +21,7 @@ class LargeButton extends StatelessWidget {
       // padding: const EdgeInsets.symmetric(
       //     vertical: 0.0, horizontal: 47.0),
       width: double.infinity,
-      height: screenHeight * 0.07,
+      height: screenHeight * 0.06,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           shape: RoundedRectangleBorder(
