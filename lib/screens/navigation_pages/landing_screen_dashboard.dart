@@ -54,7 +54,10 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
               ),
               child: ListTile(
                 dense: true,
-                leading: const Icon(FontAwesomeIcons.user, size: 16,),
+                leading: const Icon(
+                  FontAwesomeIcons.user,
+                  size: 16,
+                ),
                 title: const Text('Profile & Settings'),
                 onTap: () {
                   Navigator.push(context,
@@ -76,13 +79,16 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
               ),
               child: ListTile(
                 dense: true,
-                leading: const Icon(FontAwesomeIcons.coins, size: 16,),
+                leading: const Icon(
+                  FontAwesomeIcons.coins,
+                  size: 16,
+                ),
                 title: const Text('Manage Expenses'),
                 onTap: () {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      }));
+                    return const ProfileSettings();
+                  }));
                 },
               ),
             ),
@@ -98,13 +104,16 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
               ),
               child: ListTile(
                 dense: true,
-                leading: const Icon(FontAwesomeIcons.moneyBills, size: 16,),
+                leading: const Icon(
+                  FontAwesomeIcons.moneyBills,
+                  size: 16,
+                ),
                 title: const Text('Manage Budget'),
                 onTap: () {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      }));
+                    return const ProfileSettings();
+                  }));
                 },
               ),
             ),
@@ -120,13 +129,16 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
               ),
               child: ListTile(
                 dense: true,
-                leading: const Icon(FontAwesomeIcons.piggyBank, size: 16,),
+                leading: const Icon(
+                  FontAwesomeIcons.piggyBank,
+                  size: 16,
+                ),
                 title: const Text('Manage Goals'),
                 onTap: () {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      }));
+                    return const ProfileSettings();
+                  }));
                 },
               ),
             ),
@@ -142,13 +154,16 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
               ),
               child: ListTile(
                 dense: true,
-                leading: const Icon(FontAwesomeIcons.squarePollVertical, size: 16,),
+                leading: const Icon(
+                  FontAwesomeIcons.squarePollVertical,
+                  size: 16,
+                ),
                 title: const Text('Dashboard'),
                 onTap: () {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      }));
+                    return const ProfileSettings();
+                  }));
                 },
               ),
             ),
@@ -164,13 +179,16 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
               ),
               child: ListTile(
                 dense: true,
-                leading: const Icon(FontAwesomeIcons.unlock, size: 16,),
+                leading: const Icon(
+                  FontAwesomeIcons.unlock,
+                  size: 16,
+                ),
                 title: const Text('Change Password'),
                 onTap: () {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      }));
+                    return const ProfileSettings();
+                  }));
                 },
               ),
             ),
@@ -186,13 +204,16 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
               ),
               child: ListTile(
                 dense: true,
-                leading: const Icon(FontAwesomeIcons.arrowRightFromBracket, size: 16,),
+                leading: const Icon(
+                  FontAwesomeIcons.arrowRightFromBracket,
+                  size: 16,
+                ),
                 title: const Text('Sign out'),
                 onTap: () {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (BuildContext context) {
-                        return const LoginPage();
-                      }));
+                    return const LoginPage();
+                  }));
                 },
               ),
             ),
@@ -282,17 +303,55 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
                     TextButton(
                       onPressed: () {
                         showModalBottomSheet(
-                            context: context, builder: (BuildContext context){
-                          return SizedBox(
-                              height: screenHeight,
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                  borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(40.0),
-                                      topRight: Radius.circular(40.0))),
-                            ),
-                          );
-                        });
+                          context: context,
+                          builder: (BuildContext context) {
+                            return ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(40.0),
+                                topRight: Radius.circular(40.0),
+                              ),
+                              child: Container(
+                                height: screenHeight * 0.8,
+                                width: double.infinity,
+                                child: Column(children: [
+                                  Row(
+                                      // A Row widget
+                                      mainAxisAlignment: MainAxisAlignment
+                                          .spaceBetween, // Free space will be equally divided and will be placed between the children.
+                                      children: [
+                                        Opacity(
+                                            // A Opacity widget
+                                            opacity:
+                                                0.0, // setting opacity to zero will make its child invisible
+                                            child: IconButton(
+                                              icon: Icon(Icons
+                                                  .clear), // some random icon
+                                              onPressed:
+                                                  null, // making the IconButton disabled
+                                            )),
+                                        Flexible(
+                                          // A Flexible widget that will make its child flexible
+                                          child: Text(
+                                            'Add new budget',
+                                            overflow: TextOverflow
+                                                .ellipsis, // handles overflowing of text
+                                          ),
+                                        ),
+                                        IconButton(
+                                            // A normal IconButton
+                                            icon: Icon(
+                                              FontAwesomeIcons.xmark,
+                                              color: kGrayColor,
+                                            ),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            }),
+                                      ]),
+                                ]),
+                              ),
+                            );
+                          },
+                        );
                       },
                       child: const Text('+ add new'),
                     )
