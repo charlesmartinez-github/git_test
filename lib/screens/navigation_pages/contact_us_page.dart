@@ -1,4 +1,3 @@
-import 'package:finedger/constants/constants.dart';
 import 'package:finedger/widgets/for_gettingstarted.dart';
 import 'package:flutter/material.dart';
 

@@ -1,15 +1,19 @@
 import 'package:finedger/screens/getting_started/login_page.dart';
-import 'package:finedger/screens/navigation_pages/change_password_page.dart';
-import 'package:finedger/screens/navigation_pages/contact_us_page.dart';
-import 'package:finedger/screens/navigation_pages/edit_profile_page.dart';
-import 'package:finedger/screens/navigation_pages/landing_screen_dashboard.dart';
-import 'package:finedger/screens/navigation_pages/notification_page.dart';
-import 'package:finedger/screens/navigation_pages/privacy_policy_page.dart';
-import 'package:finedger/screens/navigation_pages/profile_settings.dart';
-import 'package:finedger/screens/onboarding_pages/onboarding_page1.dart';
+import 'package:finedger/screens/getting_started/signup_page.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: const FirebaseOptions(
+        apiKey: "AIzaSyCHGCTEKylw4daavrNDtAgc-4A5TTUab_I",
+        appId: "1:217026675332:android:cb225046e2de97368278d1",
+        messagingSenderId: "217026675332",
+        projectId: "finedger-fed20",
+    )
+  );
   runApp(
     const MaterialApp(
       home: FinEdger(),
@@ -21,6 +25,6 @@ class FinEdger extends StatelessWidget {
   const FinEdger({super.key});
   @override
   Widget build(BuildContext context) {
-    return const OnboardingPage1();
+    return const SignupPage();
   }
 }

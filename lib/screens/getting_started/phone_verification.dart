@@ -54,10 +54,12 @@ class _PhoneVerificationState extends State<PhoneVerification> {
                   ],
                 ),
                 SizedBox(height: screenHeight * 0.03),
-                const SignUpForm(
-                    keyboardType: TextInputType.number,
-                    labelText: 'enter verification code',
-                    obscureText: false),
+                // SignUpForm(
+                //   keyboardType: TextInputType.number,
+                //   labelText: 'enter verification code',
+                //   obscureText: false,
+                //   validator: (String? value) {},
+                // ),
                 const SizedBox(height: 25.0),
                 LargeButton(
                   onPress: () {
@@ -118,14 +120,14 @@ class _PhoneVerificationState extends State<PhoneVerification> {
                 Center(
                   child: ButtonText(
                     onPress: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (BuildContext context) {
-                            return const EmailVerification();
-                          },
-                        ),
-                      );
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (BuildContext context) {
+                      //       return EmailVerification();
+                      //     },
+                      //   ),
+                      // );
                     },
                     buttonLabel: 'Choose a different way to receive it',
                   ),

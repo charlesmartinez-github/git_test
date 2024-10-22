@@ -3,6 +3,7 @@ import 'package:finedger/screens/getting_started/login_page.dart';
 import 'package:finedger/screens/navigation_pages/profile_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 
 class LandingScreenDashboard extends StatefulWidget {
   const LandingScreenDashboard({super.key});
@@ -21,6 +22,8 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
     final screenHeight = MediaQuery.sizeOf(context).height;
     final screenWidth = MediaQuery.sizeOf(context).width;
 
+    TextEditingController date = TextEditingController();
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -31,8 +34,13 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
         centerTitle: true,
         actions: <Widget>[
           IconButton(
-              onPressed: () {}, icon: const Icon(FontAwesomeIcons.comment)),
-          IconButton(onPressed: () {}, icon: const Icon(FontAwesomeIcons.bell)),
+            onPressed: () {},
+            icon: const Icon(FontAwesomeIcons.comment),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(FontAwesomeIcons.bell),
+          ),
         ],
       ),
       drawer: Drawer(
@@ -60,10 +68,14 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
                 ),
                 title: const Text('Profile & Settings'),
                 onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (BuildContext context) {
-                    return const ProfileSettings();
-                  }));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (BuildContext context) {
+                        return const ProfileSettings();
+                      },
+                    ),
+                  );
                 },
               ),
             ),
@@ -85,10 +97,14 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
                 ),
                 title: const Text('Manage Expenses'),
                 onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (BuildContext context) {
-                    return const ProfileSettings();
-                  }));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (BuildContext context) {
+                        return const ProfileSettings();
+                      },
+                    ),
+                  );
                 },
               ),
             ),
@@ -110,10 +126,14 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
                 ),
                 title: const Text('Manage Budget'),
                 onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (BuildContext context) {
-                    return const ProfileSettings();
-                  }));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (BuildContext context) {
+                        return const ProfileSettings();
+                      },
+                    ),
+                  );
                 },
               ),
             ),
@@ -135,10 +155,14 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
                 ),
                 title: const Text('Manage Goals'),
                 onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (BuildContext context) {
-                    return const ProfileSettings();
-                  }));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (BuildContext context) {
+                        return const ProfileSettings();
+                      },
+                    ),
+                  );
                 },
               ),
             ),
@@ -160,10 +184,14 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
                 ),
                 title: const Text('Dashboard'),
                 onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (BuildContext context) {
-                    return const ProfileSettings();
-                  }));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (BuildContext context) {
+                        return const ProfileSettings();
+                      },
+                    ),
+                  );
                 },
               ),
             ),
@@ -185,10 +213,14 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
                 ),
                 title: const Text('Change Password'),
                 onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (BuildContext context) {
-                    return const ProfileSettings();
-                  }));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (BuildContext context) {
+                        return const ProfileSettings();
+                      },
+                    ),
+                  );
                 },
               ),
             ),
@@ -210,10 +242,14 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
                 ),
                 title: const Text('Sign out'),
                 onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (BuildContext context) {
-                    return const LoginPage();
-                  }));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (BuildContext context) {
+                        return const LoginPage();
+                      },
+                    ),
+                  );
                 },
               ),
             ),
@@ -260,9 +296,11 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
             labelBehavior: labelBehavior,
             selectedIndex: currentPageIndex,
             onDestinationSelected: (int index) {
-              setState(() {
-                currentPageIndex = index;
-              });
+              setState(
+                () {
+                  currentPageIndex = index;
+                },
+              );
             },
             destinations: const <Widget>[
               NavigationDestination(
@@ -291,72 +329,263 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
           padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 25.0),
           child: Column(
             children: <Widget>[
-              Container(
-                //color: Colors.greenAccent,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    const Text(
-                      'Expenses',
-                      style: TextStyle(fontSize: 18.0),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return ClipRRect(
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(40.0),
-                                topRight: Radius.circular(40.0),
-                              ),
-                              child: Container(
-                                height: screenHeight * 0.8,
-                                width: double.infinity,
-                                child: Column(children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  const Text(
+                    'Expenses',
+                    style: TextStyle(fontSize: 18.0),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      showModalBottomSheet<dynamic>(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(40.0),
+                              topRight: Radius.circular(40.0),
+                            ),
+                            child: SizedBox(
+                              height: screenHeight * 0.8,
+                              width: double.infinity,
+                              child: Column(
+                                children: [
                                   Row(
-                                      // A Row widget
-                                      mainAxisAlignment: MainAxisAlignment
-                                          .spaceBetween, // Free space will be equally divided and will be placed between the children.
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Opacity(
+                                        opacity: 0.0,
+                                        child: IconButton(
+                                          icon: Icon(Icons.clear),
+                                          onPressed: null,
+                                        ),
+                                      ),
+                                      const Flexible(
+                                        child: Text(
+                                          'Add new expenses',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 17.0),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          FontAwesomeIcons.xmark,
+                                          color: kGrayColor,
+                                        ),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 20.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Opacity(
-                                            // A Opacity widget
-                                            opacity:
-                                                0.0, // setting opacity to zero will make its child invisible
-                                            child: IconButton(
-                                              icon: Icon(Icons
-                                                  .clear), // some random icon
-                                              onPressed:
-                                                  null, // making the IconButton disabled
-                                            )),
-                                        Flexible(
-                                          // A Flexible widget that will make its child flexible
-                                          child: Text(
-                                            'Add new budget',
-                                            overflow: TextOverflow
-                                                .ellipsis, // handles overflowing of text
+                                        const Text(
+                                          'Expenses name',
+                                          style: TextStyle(
+                                              color: kGrayColor,
+                                              fontSize: 15.0),
+                                        ),
+                                        const SizedBox(height: 3.0),
+                                        SizedBox(
+                                          height: 40.0,
+                                          child: TextFormField(
+                                            decoration: InputDecoration(
+                                              hintText: 'Description',
+                                              hintStyle: const TextStyle(
+                                                  color: kGrayColor,
+                                                  fontWeight: FontWeight.w300,
+                                                  fontSize: 15.0),
+                                              enabledBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              focusedBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              border:
+                                                  const OutlineInputBorder(),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10.0,
+                                                      horizontal: 10.0),
+                                            ),
                                           ),
                                         ),
-                                        IconButton(
-                                            // A normal IconButton
-                                            icon: Icon(
-                                              FontAwesomeIcons.xmark,
+                                        const SizedBox(height: 6.0),
+                                        const Text(
+                                          'Expenses date',
+                                          style: TextStyle(
                                               color: kGrayColor,
+                                              fontSize: 15.0),
+                                        ),
+                                        const SizedBox(height: 3.0),
+                                        SizedBox(
+                                          height: 40.0,
+                                          child: TextFormField(
+                                            decoration: InputDecoration(
+                                              suffixIcon: const Icon(Icons.calendar_month_outlined, color: kGrayColor,),
+                                              hintText: 'Date',
+                                              hintStyle: const TextStyle(
+                                                  color: kGrayColor,
+                                                  fontWeight: FontWeight.w300,
+                                                  fontSize: 15.0),
+                                              enabledBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              focusedBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              border:
+                                              const OutlineInputBorder(),
+                                              contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 10.0,
+                                                  horizontal: 10.0),
                                             ),
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            }),
-                                      ]),
-                                ]),
+                                            onTap: () async{
+                                              DateTime? pickeddate = await showDatePicker(
+                                                  context: context,
+                                                  initialDate: DateTime.now(),
+                                                  firstDate: DateTime(2000),
+                                                  lastDate: DateTime(2100));
+                                              if (pickeddate != null) {
+                                                setState(() {
+                                                  date.text = DateFormat('EEE, M/ d/ y').format(pickeddate);
+                                                });
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6.0),
+                                        const Text(
+                                          'Select an icon',
+                                          style: TextStyle(
+                                              color: kGrayColor,
+                                              fontSize: 15.0),
+                                        ),
+                                        const SizedBox(height: 3.0),
+                                        SizedBox(
+                                          height: 40.0,
+                                          child: TextFormField(
+                                            decoration: InputDecoration(
+                                              hintText: 'Icon',
+                                              hintStyle: const TextStyle(
+                                                  color: kGrayColor,
+                                                  fontWeight: FontWeight.w300,
+                                                  fontSize: 15.0),
+                                              enabledBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              focusedBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              border:
+                                              const OutlineInputBorder(),
+                                              contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 10.0,
+                                                  horizontal: 10.0),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6.0),
+                                        const Text(
+                                          'Amount',
+                                          style: TextStyle(
+                                              color: kGrayColor,
+                                              fontSize: 15.0),
+                                        ),
+                                        const SizedBox(height: 3.0),
+                                        SizedBox(
+                                          height: 40.0,
+                                          child: TextFormField(
+                                            keyboardType: TextInputType.number,
+                                            decoration: InputDecoration(
+                                              prefixIcon: const Icon(FontAwesomeIcons.dollarSign, color: kGrayColor,),
+                                              hintText: '00.00',
+                                              hintStyle: const TextStyle(
+                                                  color: kGrayColor,
+                                                  fontWeight: FontWeight.w300,
+                                                  fontSize: 15.0),
+                                              enabledBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              focusedBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              border:
+                                              const OutlineInputBorder(),
+                                              contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 10.0,
+                                                  horizontal: 10.0),
+                                            ),
+                                          ),
+                                        ),
+                                    const SizedBox(height: 13.0),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 45.0,
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(11),
+                                          ),
+                                          backgroundColor: kBlueColor,
+                                        ),
+                                        onPressed: (){},
+                                        child: const Text(
+                                          'Add Expenses',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                    )
+                                      ],
+                                    ),
+                                  )
+                                ],
                               ),
-                            );
-                          },
-                        );
-                      },
-                      child: const Text('+ add new'),
-                    )
-                  ],
-                ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: const Text('+ add new'),
+                  )
+                ],
               ),
               GestureDetector(
                 onTap: () {},
@@ -387,21 +616,263 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
                 ),
               ),
               SizedBox(height: screenHeight * 0.03),
-              Container(
-                //color: Colors.greenAccent,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    const Text(
-                      'Budget',
-                      style: TextStyle(fontSize: 18.0),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text('+ add new'),
-                    )
-                  ],
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  const Text(
+                    'Budget',
+                    style: TextStyle(fontSize: 18.0),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      showModalBottomSheet<dynamic>(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(40.0),
+                              topRight: Radius.circular(40.0),
+                            ),
+                            child: SizedBox(
+                              height: screenHeight * 0.8,
+                              width: double.infinity,
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Opacity(
+                                        opacity: 0.0,
+                                        child: IconButton(
+                                          icon: Icon(Icons.clear),
+                                          onPressed: null,
+                                        ),
+                                      ),
+                                      const Flexible(
+                                        child: Text(
+                                          'Add new budget',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 17.0),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          FontAwesomeIcons.xmark,
+                                          color: kGrayColor,
+                                        ),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 20.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Expenses name',
+                                          style: TextStyle(
+                                              color: kGrayColor,
+                                              fontSize: 15.0),
+                                        ),
+                                        const SizedBox(height: 3.0),
+                                        SizedBox(
+                                          height: 40.0,
+                                          child: TextFormField(
+                                            decoration: InputDecoration(
+                                              hintText: 'Description',
+                                              hintStyle: const TextStyle(
+                                                  color: kGrayColor,
+                                                  fontWeight: FontWeight.w300,
+                                                  fontSize: 15.0),
+                                              enabledBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              focusedBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              border:
+                                              const OutlineInputBorder(),
+                                              contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 10.0,
+                                                  horizontal: 10.0),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6.0),
+                                        const Text(
+                                          'Expenses date',
+                                          style: TextStyle(
+                                              color: kGrayColor,
+                                              fontSize: 15.0),
+                                        ),
+                                        const SizedBox(height: 3.0),
+                                        SizedBox(
+                                          height: 40.0,
+                                          child: TextFormField(
+                                            decoration: InputDecoration(
+                                              suffixIcon: const Icon(Icons.calendar_month_outlined, color: kGrayColor,),
+                                              hintText: 'Date',
+                                              hintStyle: const TextStyle(
+                                                  color: kGrayColor,
+                                                  fontWeight: FontWeight.w300,
+                                                  fontSize: 15.0),
+                                              enabledBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              focusedBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              border:
+                                              const OutlineInputBorder(),
+                                              contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 10.0,
+                                                  horizontal: 10.0),
+                                            ),
+                                            onTap: () async{
+                                              DateTime? pickeddate = await showDatePicker(
+                                                  context: context,
+                                                  initialDate: DateTime.now(),
+                                                  firstDate: DateTime(2000),
+                                                  lastDate: DateTime(2100));
+                                              if (pickeddate != null) {
+                                                setState(() {
+                                                  date.text = DateFormat('EEE, M/ d/ y').format(pickeddate);
+                                                });
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6.0),
+                                        const Text(
+                                          'Select an icon',
+                                          style: TextStyle(
+                                              color: kGrayColor,
+                                              fontSize: 15.0),
+                                        ),
+                                        const SizedBox(height: 3.0),
+                                        SizedBox(
+                                          height: 40.0,
+                                          child: TextFormField(
+                                            decoration: InputDecoration(
+                                              hintText: 'Icon',
+                                              hintStyle: const TextStyle(
+                                                  color: kGrayColor,
+                                                  fontWeight: FontWeight.w300,
+                                                  fontSize: 15.0),
+                                              enabledBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              focusedBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              border:
+                                              const OutlineInputBorder(),
+                                              contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 10.0,
+                                                  horizontal: 10.0),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6.0),
+                                        const Text(
+                                          'Amount',
+                                          style: TextStyle(
+                                              color: kGrayColor,
+                                              fontSize: 15.0),
+                                        ),
+                                        const SizedBox(height: 3.0),
+                                        SizedBox(
+                                          height: 40.0,
+                                          child: TextFormField(
+                                            keyboardType: TextInputType.number,
+                                            decoration: InputDecoration(
+                                              prefixIcon: const Icon(FontAwesomeIcons.dollarSign, color: kGrayColor,),
+                                              hintText: '00.00',
+                                              hintStyle: const TextStyle(
+                                                  color: kGrayColor,
+                                                  fontWeight: FontWeight.w300,
+                                                  fontSize: 15.0),
+                                              enabledBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              focusedBorder: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(
+                                                      10.0),
+                                                  borderSide: const BorderSide(
+                                                      color: kGrayColor)),
+                                              border:
+                                              const OutlineInputBorder(),
+                                              contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 10.0,
+                                                  horizontal: 10.0),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 13.0),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: 45.0,
+                                          child: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(11),
+                                              ),
+                                              backgroundColor: kBlueColor,
+                                            ),
+                                            onPressed: (){},
+                                            child: const Text(
+                                              'Add Expenses',
+                                              style: TextStyle(color: Colors.white),
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: const Text('+ add new'),
+                  )
+                ],
               ),
               GestureDetector(
                 onTap: () {},
@@ -429,21 +900,18 @@ class _LandingScreenDashboardState extends State<LandingScreenDashboard> {
                 ),
               ),
               SizedBox(height: screenHeight * 0.03),
-              Container(
-                //color: Colors.greenAccent,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    const Text(
-                      'Goals',
-                      style: TextStyle(fontSize: 18.0),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text('+ add new'),
-                    )
-                  ],
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  const Text(
+                    'Goals',
+                    style: TextStyle(fontSize: 18.0),
+                  ),
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text('+ add new'),
+                  )
+                ],
               ),
               GestureDetector(
                 onTap: () {},

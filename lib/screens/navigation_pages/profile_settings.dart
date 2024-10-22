@@ -1,4 +1,3 @@
-import 'package:finedger/constants/constants.dart';
 import 'package:finedger/screens/getting_started/login_page.dart';
 import 'package:finedger/screens/navigation_pages/change_password_page.dart';
 import 'package:finedger/screens/navigation_pages/contact_us_page.dart';

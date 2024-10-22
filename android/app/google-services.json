@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "217026675332",
+    "project_id": "finedger-fed20",
+    "storage_bucket": "finedger-fed20.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217026675332:android:cb225046e2de97368278d1",
+        "android_client_info": {
+          "package_name": "com.example.finedger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHGCTEKylw4daavrNDtAgc-4A5TTUab_I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

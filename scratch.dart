@@ -1,8 +1,14 @@
+import 'dart:developer';
+
+import 'package:email_otp/email_otp.dart';
 import 'package:flutter/material.dart';
+import 'package:finedger/services/firebase_auth_services.dart';
 
 class Page extends StatelessWidget {
-  const Page({super.key});
-
+  Page({super.key});
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController otpController = TextEditingController();
+  EmailOTP myOTP = EmailOTP();
   @override
   Widget build(BuildContext context) {
     // Screen size
@@ -23,7 +29,7 @@ class Page extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: screenHeight * 0.10), // Spacer at the top
-      
+
                 // Title or Logo
                 Center(
                   child: Text(
@@ -35,9 +41,10 @@ class Page extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.05),
-      
+
                 // Email TextField
                 TextField(
+                  controller: emailController,
                   decoration: InputDecoration(
                     labelText: "Email",
                     border: OutlineInputBorder(
@@ -46,9 +53,10 @@ class Page extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.02),
-      
+
                 // Password TextField
                 TextField(
+                  controller: otpController,
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: "Password",
@@ -58,15 +66,17 @@ class Page extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.02),
-      
+
                 // Login Button (Full Width, Responsive Padding)
                 Container(
                   color: Colors.redAccent,
                   padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.02, // 2% padding for responsiveness
+                    horizontal:
+                        screenWidth * 0.02, // 2% padding for responsiveness
                   ),
                   width: double.infinity,
-                  height: screenHeight * 0.08, // Button height as 8% of screen height
+                  height: screenHeight *
+                      0.08, // Button height as 8% of screen height
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(
@@ -75,7 +85,7 @@ class Page extends StatelessWidget {
                       backgroundColor: Colors.blue,
                     ),
                     onPressed: () {
-                      // Handle login action
+                      sentOTP(emailController.text);
                     },
                     child: Text(
                       "Login",
@@ -87,12 +97,11 @@ class Page extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.05),
-      
                 // Register link
                 Center(
                   child: TextButton(
                     onPressed: () {
-                      // Navigate to register page
+                      verifyOTP(otpController.text);
                     },
                     child: Text(
                       "Don't have an account? Register",
@@ -107,10 +116,30 @@ class Page extends StatelessWidget {
       ),
     );
   }
+  Future<void> sentOTP(String email) async {
+    EmailOTP.config(
+        appEmail: 'finedger@email.com',
+        appName: 'FinEdger',
+        otpLength: 6,
+        emailTheme: EmailTheme.v1,
+    );
+    var sendOTP = await EmailOTP.sendOTP(email: email);
+    if (sendOTP) {
+      log('OTP Sent');
+    } else {
+      log('Error');
+    }
+  }
+
+  Future<void> verifyOTP(String otp) async {
+    EmailOTP.verifyOTP(otp: otp);
+  }
 }
 
+
+
 void main() {
-  runApp(const MaterialApp(
+  runApp(MaterialApp(
     home: Page(),
   ));
 }

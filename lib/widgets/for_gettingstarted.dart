@@ -60,21 +60,34 @@ class ButtonText extends StatelessWidget {
   }
 }
 
-class SignUpForm extends StatelessWidget {
-  const SignUpForm({
-    super.key, required this.keyboardType, required this.labelText, required this.obscureText,
+class OTPForm extends StatefulWidget {
+  const OTPForm({
+    super.key,
+    required this.controller,
+    required this.validator,
+    required this.keyboardType,
+    required this.labelText,
   });
 
+  final TextEditingController controller;
+  final FormFieldValidator<String> validator;
   final TextInputType keyboardType;
   final String labelText;
-  final bool obscureText;
 
+  @override
+  State<OTPForm> createState() => _OTPFormState();
+}
+
+class _OTPFormState extends State<OTPForm> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      obscureText: obscureText,
-      keyboardType: keyboardType,
+      controller: widget.controller,
+      validator: widget.validator,
+      keyboardType: widget.keyboardType,
+      autovalidateMode: AutovalidateMode.onUnfocus,
       decoration: InputDecoration(
+        labelText: widget.labelText,
         floatingLabelStyle: const TextStyle(
           color: kBlueColor,
         ),
@@ -91,35 +104,114 @@ class SignUpForm extends StatelessWidget {
           ),
         ),
         border: const OutlineInputBorder(),
-        labelText: labelText,
         isDense: true,
-        contentPadding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
+        contentPadding:
+        const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
       ),
     );
   }
 }
 
-class LoginForm extends StatelessWidget {
+
+class SignUpForm extends StatefulWidget {
+
+  const SignUpForm({
+    super.key,
+    required this.controller,
+    required this.validator,
+    required this.keyboardType,
+    required this.obscureText,
+    required this.labelText,
+  });
+
+  final TextEditingController controller;
+  final FormFieldValidator<String> validator;
+  final TextInputType keyboardType;
+  final bool obscureText;
+  final String labelText;
+
+  @override
+  State<SignUpForm> createState() => _SignUpFormState();
+}
+
+class _SignUpFormState extends State<SignUpForm> {
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: widget.controller,
+      validator: widget.validator,
+      keyboardType: widget.keyboardType,
+      obscureText: widget.obscureText,
+      autovalidateMode: AutovalidateMode.onUnfocus,
+      decoration: InputDecoration(
+        labelText: widget.labelText,
+        floatingLabelStyle: const TextStyle(
+          color: kBlueColor,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: const BorderSide(
+            color: kBlueColor,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: const BorderSide(
+            color: kBlueColor,
+          ),
+        ),
+        border: const OutlineInputBorder(),
+        isDense: true,
+        contentPadding:
+        const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
+      ),
+    );
+  }
+}
+
+class LoginForm extends StatefulWidget {
   const LoginForm({
-    super.key, required this.hintText, required this.keyboardType, required this.obscureText,
+    super.key,
+    required this.controller,
+    required this.validator,
+    required this.keyboardType,
+    required this.obscureText,
+    required this.hintText,
+    required this.enableSuggestions,
+    required this.autoCorrect,
   });
 
   final String hintText;
   final TextInputType keyboardType;
   final bool obscureText;
+  final TextEditingController controller;
+  final FormFieldValidator<String> validator;
+  final bool enableSuggestions;
+  final bool autoCorrect;
 
+
+  @override
+  State<LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<LoginForm> {
   @override
   Widget build(BuildContext context) {
     return Material(
       elevation: 4.0,
       child: TextFormField(
-        obscureText: obscureText,
-        keyboardType: keyboardType,
+        validator: widget.validator,
+        controller: widget.controller,
+        obscureText: widget.obscureText,
+        keyboardType: widget.keyboardType,
+        enableSuggestions: widget.enableSuggestions,
+        autocorrect: widget.autoCorrect,
         decoration:  InputDecoration(
           fillColor: Colors.white,
           filled: true,
           border: InputBorder.none,
-          hintText: hintText,
+          hintText: widget.hintText,
           hintStyle: const TextStyle(color: kGrayColor,
               fontSize: 15.0),
           contentPadding: const EdgeInsets.fromLTRB(15.0, 8.0, 8.0, 8.0),

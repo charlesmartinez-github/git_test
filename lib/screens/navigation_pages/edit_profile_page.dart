@@ -1,7 +1,6 @@
 import 'package:finedger/widgets/for_gettingstarted.dart';
 import 'package:flutter/material.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
-import 'package:country_picker/country_picker.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -342,7 +341,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                   ),
                   child: DropdownButtonFormField(
-                    items: [],
+                    items: const [],
                     onChanged: (value) {},
                     decoration: const InputDecoration(
                       border: InputBorder.none,
@@ -363,7 +362,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                   ),
                   child: DropdownButtonFormField(
-                    items: [],
+                    items: const [],
                     onChanged: (value) {},
                     decoration: const InputDecoration(
                         border: InputBorder.none,
