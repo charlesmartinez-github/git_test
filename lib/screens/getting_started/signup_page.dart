@@ -1,6 +1,4 @@
-import 'dart:developer';
 
-import 'package:email_otp/email_otp.dart';
 import 'package:finedger/screens/getting_started/email_verification.dart';
 import 'package:finedger/screens/getting_started/login_page.dart';
 import 'package:finedger/services/firebase_auth_services.dart';
@@ -17,9 +15,6 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-  final _auth = FirebaseAuthService();
-  final _otp = EmailOTPSender();
-
   final TextEditingController _firstName = TextEditingController();
   final TextEditingController _lastName = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -214,6 +209,9 @@ class _SignupPageState extends State<SignupPage> {
                               builder: (builder) => EmailVerification(
                                 email: _emailController.text,
                                 password: _passwordController.text,
+                                firstName: _firstName.text,
+                                lastName: _lastName.text,
+                                phoneNumber: _phoneNumber.text,
                               ),
                             ),
                           );

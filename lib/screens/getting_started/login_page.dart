@@ -1,4 +1,4 @@
-import 'package:finedger/screens/navigation_pages/landing_screen_dashboard.dart';
+import 'package:finedger/screens/navigation_pages/navigation.dart';
 import 'package:finedger/services/firebase_auth_services.dart';
 import 'package:flutter/material.dart';
 import 'package:finedger/widgets/for_gettingstarted.dart';
@@ -23,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
     RegExp emailRegex = RegExp(
         r"^[a-zA-Z0-9.a-zA-Z0-9!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
     final isEmailValid = emailRegex.hasMatch(email ?? '');
-    if (email!.isEmpty){
+    if (email!.isEmpty) {
       return 'Email is required';
     }
     if (!isEmailValid) {
@@ -34,7 +34,7 @@ class _LoginPageState extends State<LoginPage> {
 
   bool isChecked = false;
   final _formKey = GlobalKey<FormState>();
-  
+
   @override
   void dispose() {
     super.dispose();
@@ -97,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                       //Login Button
                       onPress: () {
                         if (_formKey.currentState!.validate()) {
-                          _signIn();
+                          _signIn(context);
                         }
                       },
                       buttonLabel: 'Login',
@@ -188,18 +188,23 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  _signIn() async {
+  _signIn(BuildContext context) async {
     final user = await _auth.signInWithEmailAndPassword(
-        _emailController.text, _passwordController.text);
+      _emailController.text,
+      _passwordController.text,
+    );
     if (user != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) {
-            return const LandingScreenDashboard();
-          },
-        ),
-      );
+      // Check if the widget is still mounted
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) {
+              return const Navigation();
+            },
+          ),
+        );
+      }
     }
   }
 }

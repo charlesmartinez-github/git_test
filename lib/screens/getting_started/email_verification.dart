@@ -1,6 +1,4 @@
 import 'dart:developer';
-
-import 'package:email_otp/email_otp.dart';
 import 'package:finedger/constants/constants.dart';
 import 'package:finedger/screens/getting_started/phone_verification.dart';
 import 'package:finedger/screens/getting_started/successful_signup.dart';
@@ -11,23 +9,24 @@ import 'package:flutter/material.dart';
 class EmailVerification extends StatefulWidget {
   final String email;
   final String password;
-  //final String? otpCode;
-  //final EmailOTP myOtp;
+  final String firstName;
+  final String lastName;
+  final String phoneNumber;
 
-  const EmailVerification({
-    super.key,
-    required this.email,
-    required this.password,
-    //this.otpCode,
-    //required this.myOtp
-  });
+  const EmailVerification(
+      {super.key,
+      required this.email,
+      required this.password,
+      required this.firstName,
+      required this.lastName,
+      required this.phoneNumber
+      });
 
   @override
   State<EmailVerification> createState() => _EmailVerificationState();
 }
 
 class _EmailVerificationState extends State<EmailVerification> {
-
   final _auth = FirebaseAuthService();
   final _otp = EmailOTPSender();
   final _formKey = GlobalKey<FormState>();
@@ -36,7 +35,6 @@ class _EmailVerificationState extends State<EmailVerification> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _otp.sendOTPto(widget.email);
   }
@@ -101,8 +99,9 @@ class _EmailVerificationState extends State<EmailVerification> {
                     onPress: () async {
                       log(_otpController.text);
                       log(_otp.getOTP().toString());
-                      if (_formKey.currentState!.validate()){
-                        bool isVerified = await _otp.verifyOTP(_otpController.text);
+                      if (_formKey.currentState!.validate()) {
+                        bool isVerified =
+                            await _otp.verifyOTP(_otpController.text);
                         if (isVerified) {
                           _signUp();
                         }
@@ -122,8 +121,8 @@ class _EmailVerificationState extends State<EmailVerification> {
                         onPressed: () {},
                         child: const Text(
                           'Send a new code',
-                          style:
-                              TextStyle(color: Color(0xff30437a), fontSize: 13.0),
+                          style: TextStyle(
+                              color: Color(0xff30437a), fontSize: 13.0),
                         ),
                       ),
                     ],
@@ -177,19 +176,19 @@ class _EmailVerificationState extends State<EmailVerification> {
     );
   }
 
-_signUp() async {
-  final user = await _auth.createUserWithEmailAndPassword(
-      widget.email, widget.password);
-  if (user != null) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) {
-          return const SuccessfulSignup();
-        },
-      ),
-    );
-  }
-}
 
+  _signUp() async {
+    final user = await _auth.createUserWithEmailAndPassword(widget.email,
+        widget.password, widget.firstName, widget.lastName, widget.phoneNumber);
+    if (user != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) {
+            return const SuccessfulSignup();
+          },
+        ),
+      );
+    }
+  }
 }

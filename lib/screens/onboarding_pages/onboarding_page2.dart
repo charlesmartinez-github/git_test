@@ -26,9 +26,7 @@ class OnboardingPage2 extends StatelessWidget {
                   Text(
                     'Save today, thrive tomorrow',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 23.0
-                    ),
+                    style: TextStyle(fontSize: 23.0),
                   ),
                   Text(
                     'Your path to financial freedom starts with every coin saved',
@@ -53,7 +51,7 @@ class OnboardingPage2 extends StatelessWidget {
                   backgroundColor: const Color(0xff30437a),
                 ),
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (BuildContext context) {
                       return const OnboardingPage3();
@@ -68,7 +66,7 @@ class OnboardingPage2 extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                     builder: (BuildContext context) {

@@ -1,5 +1,7 @@
 import 'package:finedger/screens/getting_started/login_page.dart';
 import 'package:finedger/screens/getting_started/signup_page.dart';
+import 'package:finedger/screens/onboarding_pages/onboarding_page1.dart';
+import 'package:finedger/wrapper.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -25,6 +27,6 @@ class FinEdger extends StatelessWidget {
   const FinEdger({super.key});
   @override
   Widget build(BuildContext context) {
-    return const SignupPage();
+    return const Wrapper();
   }
 }

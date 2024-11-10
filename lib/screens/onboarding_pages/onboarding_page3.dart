@@ -26,9 +26,7 @@ class OnboardingPage3 extends StatelessWidget {
                   Text(
                     'Goals realized, dreams unlocked',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 23.0
-                    ),
+                    style: TextStyle(fontSize: 23.0),
                   ),
                   Text(
                     'Your journey to success begins now',
@@ -55,7 +53,7 @@ class OnboardingPage3 extends StatelessWidget {
                     backgroundColor: const Color(0xff30437a),
                   ),
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (BuildContext context) {
                         return const LoginPage();
