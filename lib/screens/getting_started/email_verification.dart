@@ -37,6 +37,7 @@ class _EmailVerificationState extends State<EmailVerification> {
   void initState() {
     super.initState();
     _otp.sendOTPto(widget.email);
+    print(_otp.getOTP());
   }
 
   @override
@@ -104,6 +105,7 @@ class _EmailVerificationState extends State<EmailVerification> {
                             await _otp.verifyOTP(_otpController.text);
                         if (isVerified) {
                           _signUp();
+                          _auth.createInitialAccount();
                         }
                       }
                     },
@@ -118,7 +120,7 @@ class _EmailVerificationState extends State<EmailVerification> {
                         style: TextStyle(color: kGrayColor, fontSize: 13.0),
                       ),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () {_otp.sendOTPto(widget.email);},
                         child: const Text(
                           'Send a new code',
                           style: TextStyle(

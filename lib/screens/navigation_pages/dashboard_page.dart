@@ -830,235 +830,235 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ),
-      appBar: AppBar(
-        forceMaterialTransparency: true,
-        title: Text(formatter),
-        centerTitle: true,
-        actions: <Widget>[
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(FontAwesomeIcons.comment),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(FontAwesomeIcons.bell),
-          ),
-        ],
-      ),
-      drawer: Drawer(
-        backgroundColor: Colors.white,
-        child: ListView(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
-          children: [
-            const DrawerHeader(
-              child: Text('header'),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.user,
-                  size: 16,
-                ),
-                title: const Text('Profile & Settings'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.coins,
-                  size: 16,
-                ),
-                title: const Text('Manage Expenses'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.moneyBills,
-                  size: 16,
-                ),
-                title: const Text('Manage Budget'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.piggyBank,
-                  size: 16,
-                ),
-                title: const Text('Manage Goals'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.squarePollVertical,
-                  size: 16,
-                ),
-                title: const Text('Dashboard'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.unlock,
-                  size: 16,
-                ),
-                title: const Text('Change Password'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.arrowRightFromBracket,
-                  size: 16,
-                ),
-                title: const Text('Sign out'),
-                onTap: () {
-                  _firebaseServices.signOut();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const LoginPage();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+      // appBar: AppBar(
+      //   forceMaterialTransparency: true,
+      //   title: Text(formatter),
+      //   centerTitle: true,
+      //   actions: <Widget>[
+      //     IconButton(
+      //       onPressed: () {},
+      //       icon: const Icon(FontAwesomeIcons.comment),
+      //     ),
+      //     IconButton(
+      //       onPressed: () {},
+      //       icon: const Icon(FontAwesomeIcons.bell),
+      //     ),
+      //   ],
+      // ),
+      // drawer: Drawer(
+      //   backgroundColor: Colors.white,
+      //   child: ListView(
+      //     padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
+      //     children: [
+      //       const DrawerHeader(
+      //         child: Text('header'),
+      //       ),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.user,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Profile & Settings'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.coins,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Manage Expenses'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.moneyBills,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Manage Budget'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.piggyBank,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Manage Goals'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.squarePollVertical,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Dashboard'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.unlock,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Change Password'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.arrowRightFromBracket,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Sign out'),
+      //           onTap: () {
+      //             _firebaseServices.signOut();
+      //             Navigator.pushReplacement(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const LoginPage();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //     ],
+      //   ),
+      // ),
     );
   }
 

@@ -1,9 +1,7 @@
-import 'package:finedger/screens/getting_started/login_page.dart';
-import 'package:finedger/screens/getting_started/signup_page.dart';
-import 'package:finedger/screens/onboarding_pages/onboarding_page1.dart';
 import 'package:finedger/wrapper.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 
 void main() async {
@@ -17,8 +15,11 @@ void main() async {
     )
   );
   runApp(
-    const MaterialApp(
-      home: FinEdger(),
+    MaterialApp(
+      theme: ThemeData(
+        fontFamily: GoogleFonts.roboto().fontFamily
+      ),
+      home: const FinEdger(),
     ),
   );
 }

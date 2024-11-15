@@ -1,212 +1,98 @@
-import 'dart:developer';
-
-import 'package:email_otp/email_otp.dart';
 import 'package:flutter/material.dart';
-import 'package:finedger/services/firebase_auth_services.dart';
-
-// class Page extends StatefulWidget {
-//   Page({super.key});
-//
-//   @override
-//   State<Page> createState() => _PageState();
-// }
-//
-// class _PageState extends State<Page> {
-//   final TextEditingController emailController = TextEditingController();
-//
-//   final TextEditingController otpController = TextEditingController();
-//
-//   EmailOTP myOTP = EmailOTP();
-//
-//   String _initialDropDownValue = 'Not on the budget';
-//
-//   var _dropDownItems = [
-//     'Food',
-//     'Transp',
-//     'Naild',
-//   ];
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     // Screen size
-//     final screenHeight = MediaQuery.of(context).size.height;
-//     final screenWidth = MediaQuery.of(context).size.width;
-//
-//     return SafeArea(
-//       child: Scaffold(
-//         backgroundColor: Colors.white,
-//         body: SingleChildScrollView(
-//           child: Container(
-//             color: Colors.greenAccent,
-//             padding: EdgeInsets.symmetric(
-//               horizontal: screenWidth * 0.10, // 10% of screen width
-//               vertical: screenHeight * 0.05, // 5% of screen height
-//             ),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 SizedBox(height: screenHeight * 0.10),
-//                 DropdownButton(
-//                     items: _dropDownItems.map((String item){
-//                       return DropdownMenuItem(value: item, child: Text(item));
-//                     }).toList(),
-//                     onChanged: (String? newValue){
-//                       setState(() {
-//                         _initialDropDownValue = newValue!;
-//                       });
-//                     },
-//                   value: _initialDropDownValue,
-//                 ),
-//
-//                 // Title or Logo
-//                 Center(
-//                   child: Text(
-//                     "Login",
-//                     style: TextStyle(
-//                       fontSize: screenHeight * 0.05, // Responsive font size
-//                       fontWeight: FontWeight.bold,
-//                     ),
-//                   ),
-//                 ),
-//                 SizedBox(height: screenHeight * 0.05),
-//
-//                 // Email TextField
-//                 TextField(
-//                   controller: emailController,
-//                   decoration: InputDecoration(
-//                     labelText: "Email",
-//                     border: OutlineInputBorder(
-//                       borderRadius: BorderRadius.circular(12),
-//                     ),
-//                   ),
-//                 ),
-//                 SizedBox(height: screenHeight * 0.02),
-//
-//                 // Password TextField
-//                 TextField(
-//                   controller: otpController,
-//                   obscureText: true,
-//                   decoration: InputDecoration(
-//                     labelText: "Password",
-//                     border: OutlineInputBorder(
-//                       borderRadius: BorderRadius.circular(12),
-//                     ),
-//                   ),
-//                 ),
-//                 SizedBox(height: screenHeight * 0.02),
-//
-//                 // Login Button (Full Width, Responsive Padding)
-//                 Container(
-//                   color: Colors.redAccent,
-//                   padding: EdgeInsets.symmetric(
-//                     horizontal:
-//                         screenWidth * 0.02, // 2% padding for responsiveness
-//                   ),
-//                   width: double.infinity,
-//                   height: screenHeight *
-//                       0.08, // Button height as 8% of screen height
-//                   child: ElevatedButton(
-//                     style: ElevatedButton.styleFrom(
-//                       shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(12),
-//                       ),
-//                       backgroundColor: Colors.blue,
-//                     ),
-//                     onPressed: () {
-//                       sentOTP(emailController.text);
-//                     },
-//                     child: Text(
-//                       "Login",
-//                       style: TextStyle(
-//                         fontSize: screenHeight * 0.025, // Responsive font size
-//                         color: Colors.white,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//                 SizedBox(height: screenHeight * 0.05),
-//                 // Register link
-//                 Center(
-//                   child: TextButton(
-//                     onPressed: () {
-//                       verifyOTP(otpController.text);
-//                     },
-//                     child: Text(
-//                       "Don't have an account? Register",
-//                       style: TextStyle(fontSize: screenHeight * 0.02),
-//                     ),
-//                   ),
-//                 ),
-//
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Future<void> sentOTP(String email) async {
-//     EmailOTP.config(
-//       appEmail: 'finedger@email.com',
-//       appName: 'FinEdger',
-//       otpLength: 6,
-//       emailTheme: EmailTheme.v1,
-//     );
-//     var sendOTP = await EmailOTP.sendOTP(email: email);
-//     if (sendOTP) {
-//       log('OTP Sent');
-//     } else {
-//       log('Error');
-//     }
-//   }
-//
-//   Future<void> verifyOTP(String otp) async {
-//     EmailOTP.verifyOTP(otp: otp);
-//   }
-// }
+import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
 void main() {
-  runApp(MaterialApp(
-    home: ListViewTest(),
-  ));
+  runApp(MyApp());
 }
 
-class ListViewTest extends StatefulWidget {
-  const ListViewTest({super.key});
-
-  @override
-  State<ListViewTest> createState() => _ListViewTestState();
-}
-
-class _ListViewTestState extends State<ListViewTest> {
-  List<String> products = ['Bed', 'Sofa', 'Chair'];
-  List<String> productDetails = [
-    'King Size Bed',
-    'King Size Sofa',
-    'Wooden Chair'
-  ];
-  List<int> price = [3000, 2500, 1860];
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        child: ListView.builder(
-            itemCount: products.length,
-            itemBuilder: (context, index) {
-              return Container(
-                color: Colors.greenAccent,
-                margin: EdgeInsets.symmetric(horizontal: 10.0, vertical: 20.0),
-                child: ListTile(
-                  leading: CircleAvatar(child: Text(products[index][0]),),
-                  title: Text(products[index]),
-                  subtitle: Text(productDetails[index]),
-                  trailing: Text('P${price[index]}'),
-                ),
-              );
-            }),
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Dynamic Range Chart'),
+        ),
+        body: ChartPage(),
       ),
     );
   }
 }
+
+class ChartPage extends StatefulWidget {
+  @override
+  _ChartPageState createState() => _ChartPageState();
+}
+
+class _ChartPageState extends State<ChartPage> {
+  DateRange _selectedRange = DateRange.sevenDays;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _selectedRange = DateRange.sevenDays;
+                });
+              },
+              child: Text('7 Days'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _selectedRange = DateRange.thirtyDays;
+                });
+              },
+              child: Text('30 Days'),
+            ),
+          ],
+        ),
+        Expanded(
+          child: SfCartesianChart(
+            primaryXAxis: DateTimeAxis(
+              name: 'Date',
+              minimum: _selectedRange == DateRange.sevenDays
+                  ? DateTime.now().subtract(Duration(days: 7))
+                  : DateTime.now().subtract(Duration(days: 30)),
+              maximum: DateTime.now(),
+            ),
+            series: <LineSeries<DataPoint, DateTime>>[
+              LineSeries<DataPoint, DateTime>(
+                name: 'Balance',
+                dataSource: _getData(),
+                xValueMapper: (DataPoint data, _) => data.date,
+                yValueMapper: (DataPoint data, _) => data.value,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<DataPoint> _getData() {
+    // Replace with your real data.
+    return [
+      DataPoint(DateTime.now().subtract(Duration(days: 30)), 300),
+      DataPoint(DateTime.now().subtract(Duration(days: 20)), 3500),
+      DataPoint(DateTime.now().subtract(Duration(days: 10)), 1000),
+      DataPoint(DateTime.now().subtract(Duration(days: 5)), 2000),
+      DataPoint(DateTime.now(), 1500),
+    ];
+  }
+}
+
+class DataPoint {
+  final DateTime date;
+  final int value;
+
+  DataPoint(this.date, this.value);
+}
+
+enum DateRange { sevenDays, thirtyDays }

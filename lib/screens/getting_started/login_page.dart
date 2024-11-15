@@ -190,8 +190,8 @@ class _LoginPageState extends State<LoginPage> {
 
   _signIn(BuildContext context) async {
     final user = await _auth.signInWithEmailAndPassword(
-      _emailController.text,
-      _passwordController.text,
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
     );
     if (user != null) {
       // Check if the widget is still mounted

@@ -321,8 +321,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               border: InputBorder.none,
                               labelText: 'Phone Number',
                               floatingLabelStyle: TextStyle(fontSize: 13.0),
-                              floatingLabelBehavior:
-                                  FloatingLabelBehavior.always),
+                              floatingLabelBehavior: FloatingLabelBehavior.always),
                           // Format input (e.g., adding spaces between digits)
                           formatInput: false,
                         ),
@@ -344,11 +343,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     items: const [],
                     onChanged: (value) {},
                     decoration: const InputDecoration(
-                      border: InputBorder.none,
+                        border: InputBorder.none,
                         labelStyle: TextStyle(fontSize: 13.0),
-                      labelText: 'Country',
-                      floatingLabelBehavior: FloatingLabelBehavior.always
-                    ),
+                        labelText: 'Country',
+                        floatingLabelBehavior: FloatingLabelBehavior.always),
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.02),
@@ -368,8 +366,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         border: InputBorder.none,
                         labelStyle: TextStyle(fontSize: 13.0),
                         labelText: 'Gender',
-                        floatingLabelBehavior: FloatingLabelBehavior.always
-                    ),
+                        floatingLabelBehavior: FloatingLabelBehavior.always),
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.02),
@@ -392,7 +389,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.02),
-                SmallButton(buttonLabel: 'SUBMIT', onPress: (){})
+                SmallButton(buttonLabel: 'SUBMIT', onPress: () {})
               ],
             ),
           ),

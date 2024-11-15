@@ -43,6 +43,10 @@ dependencies:
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
   email_otp: ^3.0.2
+  google_fonts: ^6.2.1
+  syncfusion_flutter_charts: ^27.1.58
+  url_launcher: ^6.3.1
+  fl_chart: ^0.69.0
 
 dev_dependencies:
   flutter_test:

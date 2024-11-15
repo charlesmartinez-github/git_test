@@ -1,3 +1,4 @@
+import 'package:finedger/main.dart';
 import 'package:finedger/screens/getting_started/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -50,10 +51,10 @@ class SuccessfulSignup extends StatelessWidget {
                       backgroundColor: const Color(0xff30437a),
                     ),
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (BuildContext context) {
-                          return const LoginPage();
+                          return const FinEdger();
                         }),
                       );
                     },

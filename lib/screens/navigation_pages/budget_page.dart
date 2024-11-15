@@ -7,9 +7,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
 class BudgetPage extends StatefulWidget {
-  const BudgetPage({super.key, required this.onAddItems});
+  const BudgetPage({super.key, this.onAddItems});
 
-  final Function(String) onAddItems;
+  final Function(String)? onAddItems;
 
   @override
   State<BudgetPage> createState() => _BudgetPageState();
@@ -90,7 +90,7 @@ class _BudgetPageState extends State<BudgetPage> {
                                       ),
                                       const Flexible(
                                         child: Text(
-                                          'Add new budget',
+                                          'Add a budget',
                                           style: TextStyle(
                                               fontWeight: FontWeight.w400,
                                               fontSize: 17.0),
@@ -315,7 +315,7 @@ class _BudgetPageState extends State<BudgetPage> {
                                                   TextInputType.number,
                                               decoration: InputDecoration(
                                                 prefixIcon: const Icon(
-                                                  FontAwesomeIcons.dollarSign,
+                                                  FontAwesomeIcons.pesoSign,
                                                   color: kGrayColor,
                                                 ),
                                                 hintText: '00.00',
@@ -376,7 +376,7 @@ class _BudgetPageState extends State<BudgetPage> {
                                                         .replaceAll(",", ""));
                                                 if (_formKey.currentState!
                                                     .validate()) {
-                                                  widget.onAddItems(newCategory);
+                                                  widget.onAddItems!(newCategory);
                                                   _firebaseServices.addBudget(
                                                       _budgetNameController
                                                           .text,
@@ -388,7 +388,7 @@ class _BudgetPageState extends State<BudgetPage> {
                                                 }
                                               },
                                               child: const Text(
-                                                'Add Expenses',
+                                                'Create budget',
                                                 style: TextStyle(
                                                     color: Colors.white),
                                               ),
@@ -414,8 +414,8 @@ class _BudgetPageState extends State<BudgetPage> {
                 style: const TextStyle(fontSize: 16.0),
               ),
               const SizedBox(height: 10.0),
-              FutureBuilder(
-                  future: _firebaseServices.getUserBudgets(),
+              StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: _firebaseServices.getUserBudgets(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -425,241 +425,267 @@ class _BudgetPageState extends State<BudgetPage> {
                       return const Center(child: Text("No budget found"));
                     } else {
                       final budgets = snapshot.data!;
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: budgets.length,
+                        itemBuilder: (context, index) {
+                          final budget = budgets[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Card(
+                              child: ListTile(
+                                isThreeLine: true,
+                                // tileColor: const Color(0xFFfbfcfb),
+                                // shape: RoundedRectangleBorder(
+                                //     borderRadius: BorderRadius.circular(10.0),
+                                //     side: const BorderSide(
+                                //         color: Color(0xFFcbcbcb))),
+                                leading: CircleAvatar(
+                                    child: Text(budget['description'][0])),
+                                title: Text(budget['description'] ?? 'No description'),
+                                subtitle: Text('Spending: ${budget['spentAmount']} \nBudget: ${budget['amount']}'),
+                              ),
+                            ),
+                          );
+                        },
+
+                      );
                     }
                   }),
             ],
           ),
         ),
       ),
-      appBar: AppBar(
-        forceMaterialTransparency: true,
-        title: Text(formatter),
-        centerTitle: true,
-        actions: <Widget>[
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(FontAwesomeIcons.comment),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(FontAwesomeIcons.bell),
-          ),
-        ],
-      ),
-      drawer: Drawer(
-        backgroundColor: Colors.white,
-        child: ListView(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
-          children: [
-            const DrawerHeader(
-              child: Text('header'),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.user,
-                  size: 16,
-                ),
-                title: const Text('Profile & Settings'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.coins,
-                  size: 16,
-                ),
-                title: const Text('Manage Expenses'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.moneyBills,
-                  size: 16,
-                ),
-                title: const Text('Manage Budget'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.piggyBank,
-                  size: 16,
-                ),
-                title: const Text('Manage Goals'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.squarePollVertical,
-                  size: 16,
-                ),
-                title: const Text('Dashboard'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.unlock,
-                  size: 16,
-                ),
-                title: const Text('Change Password'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const ProfileSettings();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.007),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFfbfcfb),
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(10),
-                ),
-              ),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(
-                  FontAwesomeIcons.arrowRightFromBracket,
-                  size: 16,
-                ),
-                title: const Text('Sign out'),
-                onTap: () {
-                  _firebaseServices.signOut();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return const LoginPage();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+      // appBar: AppBar(
+      //   forceMaterialTransparency: true,
+      //   title: Text(formatter),
+      //   centerTitle: true,
+      //   actions: <Widget>[
+      //     IconButton(
+      //       onPressed: () {},
+      //       icon: const Icon(FontAwesomeIcons.comment),
+      //     ),
+      //     IconButton(
+      //       onPressed: () {},
+      //       icon: const Icon(FontAwesomeIcons.bell),
+      //     ),
+      //   ],
+      // ),
+      // drawer: Drawer(
+      //   backgroundColor: Colors.white,
+      //   child: ListView(
+      //     padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
+      //     children: [
+      //       const DrawerHeader(
+      //         child: Text('header'),
+      //       ),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.user,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Profile & Settings'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.coins,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Manage Expenses'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.moneyBills,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Manage Budget'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.piggyBank,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Manage Goals'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.squarePollVertical,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Dashboard'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.unlock,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Change Password'),
+      //           onTap: () {
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const ProfileSettings();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //       SizedBox(height: screenHeight * 0.007),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 8),
+      //         decoration: BoxDecoration(
+      //           color: const Color(0xFFfbfcfb),
+      //           border: Border.all(color: Colors.grey),
+      //           borderRadius: const BorderRadius.all(
+      //             Radius.circular(10),
+      //           ),
+      //         ),
+      //         child: ListTile(
+      //           dense: true,
+      //           leading: const Icon(
+      //             FontAwesomeIcons.arrowRightFromBracket,
+      //             size: 16,
+      //           ),
+      //           title: const Text('Sign out'),
+      //           onTap: () {
+      //             _firebaseServices.signOut();
+      //             Navigator.pushReplacement(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (BuildContext context) {
+      //                   return const LoginPage();
+      //                 },
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //     ],
+      //   ),
+      // ),
     );
   }
 
