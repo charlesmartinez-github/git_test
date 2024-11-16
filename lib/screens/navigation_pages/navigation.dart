@@ -36,7 +36,7 @@ class _NavigationState extends State<Navigation> {
   void initState() {
     super.initState();
     // Reset page index on init to ensure it starts from the first tab
-    currentPageIndex = 3;
+    currentPageIndex = 0;
   }
 
   @override

@@ -105,7 +105,6 @@ class _EmailVerificationState extends State<EmailVerification> {
                             await _otp.verifyOTP(_otpController.text);
                         if (isVerified) {
                           _signUp();
-                          _auth.createInitialAccount();
                         }
                       }
                     },

@@ -114,7 +114,7 @@ class FirebaseAuthService {
     });
   }
 
-  void addFunds(String goalId, double amountToAdd) async {
+  void addGoalFunds(String goalId, double amountToAdd) async {
     // Reference to the specific goal document in Firestore
     String userId = _auth.currentUser!.uid;
     DocumentReference goalRef = _db.collection('users').doc(userId).collection('goals').doc(goalId);
@@ -135,7 +135,6 @@ class FirebaseAuthService {
     }
   }
 
-
   Stream<List<Map<String, dynamic>>> getUserBudgets() {
     String userId = _auth.currentUser!.uid;
     return _db
@@ -146,7 +145,6 @@ class FirebaseAuthService {
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
-
 
   Future<void> addGoal(String description, int startDate, int endDate, double targetAmount) async {
     String userId = _auth.currentUser!.uid;
@@ -188,13 +186,58 @@ class FirebaseAuthService {
         .snapshots();
   }
 
-  Future<void> createInitialAccount() async {
+  Future<void> createInitialAccount(String accountName) async {
     String userId = _auth.currentUser!.uid;
     _db.collection('users').doc(userId).collection('accounts').add({
-      'accountName' : 'Initial Account',
+      'accountName' : accountName,
+      'funds': 0.0,
       'timeStamp': FieldValue.serverTimestamp(),
     });
   }
+
+  Stream<double> streamFunds(String accountId) {
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+
+    return _db
+        .collection('users')
+        .doc(userId)
+        .collection('accounts')
+        .doc(accountId)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.exists) {
+        return snapshot.get('funds')?.toDouble() ?? 0.0;
+      } else {
+        return 0.0;
+      }
+    });
+  }
+  Future<void> addAccountFunds(String accountId, double amount) async {
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+
+    DocumentReference accountRef = _db
+        .collection('users')
+        .doc(userId)
+        .collection('accounts')
+        .doc(accountId);
+
+    await _db.runTransaction((transaction) async {
+      DocumentSnapshot accountSnapshot = await transaction.get(accountRef);
+
+      if (!accountSnapshot.exists) {
+        throw Exception("Account does not exist!");
+      }
+
+      double currentFunds = accountSnapshot.get('funds')?.toDouble() ?? 0.0;
+      double newFunds = currentFunds + amount;
+
+      transaction.update(accountRef, {'funds': newFunds});
+    }).catchError((error) {
+      log("Failed to add funds: $error");
+    });
+  }
+
+
 }
 
 

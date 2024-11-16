@@ -440,9 +440,7 @@ class _GoalsPageState extends State<GoalsPage> {
                                                                   onPressed: () {
                                                                     double amount =
                                                                     double.parse(_addFundsController.text.replaceAll(",", ""));
-                                                                    log(goalId);
-                                                                    print(amount);
-                                                                    _firebaseServices.addFunds(goalId, amount);
+                                                                    _firebaseServices.addGoalFunds(goalId, amount);
                                                                     Navigator.pop(context);
                                                                     },
                                                                   child: const Text(

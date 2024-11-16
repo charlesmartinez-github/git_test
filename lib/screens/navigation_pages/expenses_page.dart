@@ -162,7 +162,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                     ),
                     series: <CartesianSeries<DataPoint, DateTime>>[
                       AreaSeries<DataPoint, DateTime>(
-                        color: kGreenColor.withOpacity(0.3),
+                        color: kGreenColor.withOpacity(0.5),
                         name: 'Expenses',
                         dataSource: _chartData,
                         xValueMapper: (DataPoint data, _) => data.date,
