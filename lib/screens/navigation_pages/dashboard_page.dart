@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finedger/constants/constants.dart';
+import 'package:finedger/providers/account_provider.dart';
 import 'package:finedger/screens/navigation_pages/initial_account_creation.dart';
 import 'package:finedger/services/firebase_auth_services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -29,7 +31,8 @@ class _DashboardPageState extends State<DashboardPage> {
   final _fundAmountController = TextEditingController();
   String formatter = DateFormat('E, MMM d').format(DateTime.now());
   String? selectedValue;
-  String? selectedAccount;
+  //String? selectedAccount;
+
   DateTime? selectedDate;
   List<String> accountList = [];
   final _dropDownItems = [
@@ -81,7 +84,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final screenWidth = MediaQuery.sizeOf(context).width;
 
     TextEditingController date = TextEditingController();
-
+    String? selectedAccount = context.watch<AccountProvider>().selectedAccount;
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -98,15 +101,15 @@ class _DashboardPageState extends State<DashboardPage> {
                     stream: streamAccounts(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return CircularProgressIndicator(); // Show a loading indicator while data is being fetched.
+                        return const CircularProgressIndicator(); // Show a loading indicator while data is being fetched.
                       }
 
                       if (snapshot.hasError) {
-                        return Text('Error: ${snapshot.error}'); // Show an error message if an error occurs.
+                        return const Text('Error: \${snapshot.error}'); // Show an error message if an error occurs.
                       }
 
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return Text('No accounts found'); // Show a message if no data is available.
+                        return const Text('No accounts found'); // Show a message if no data is available.
                       }
 
                       List<DropdownMenuItem<String>> dropdownItems = snapshot.data!.map((account) {
@@ -117,13 +120,13 @@ class _DashboardPageState extends State<DashboardPage> {
                       }).toList();
 
                       return DropdownButton<String>(
-                        value: selectedAccount, // Ensure `selectedAccount` is defined in the State class
-                        hint: Text('Select an Account'),
+                        value: context.watch<AccountProvider>().selectedAccount, // Use Provider to get the selected account
+                        hint: const Text('Select an Account'),
                         items: dropdownItems,
                         onChanged: (String? newValue) {
                           setState(() {
-                            selectedAccount = newValue; // Update the selected account in the state
-                          });
+                            context.read<AccountProvider>().setSelectedAccount(newValue!);
+                          }); // Update the selected account using Provider
                         },
                       );
                     },
@@ -139,10 +142,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: <Widget>[
                   const Text('Funds'),
                   StreamBuilder<double>(
-                    stream: selectedAccount != null ? _firebaseServices.streamFunds(selectedAccount!) : null,
+                    stream: selectedAccount != null ? _firebaseServices.streamFunds(selectedAccount) : null,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return CircularProgressIndicator(); // Show a loading indicator while data is being fetched.
+                        return const CircularProgressIndicator(); // Show a loading indicator while data is being fetched.
                       }
 
                       if (snapshot.hasError) {
@@ -150,7 +153,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       }
 
                       if (!snapshot.hasData) {
-                        return Text('No funds data available'); // Show a message if no data is available.
+                        return const Text('No funds data available'); // Show a message if no data is available.
                       }
 
                       double funds = snapshot.data ?? 0.0;
@@ -424,8 +427,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                                 double amount =
                                                     double.parse(_amountController.text.replaceAll(",", ""));
                                                 if (_formKey.currentState!.validate()) {
-                                                  _firebaseServices.addExpense(
-                                                      amount, selectedValue, _expenseNameController.text, expenseDate);
+                                                  // _firebaseServices.addExpense(
+                                                  //     amount, selectedValue, _expenseNameController.text, expenseDate);
                                                   setState(() {
                                                     selectedValue = null;
                                                   });
@@ -1216,7 +1219,17 @@ class _DashboardPageState extends State<DashboardPage> {
                             onPressed: () {
                               if (_formKeyFund.currentState!.validate()) {
                                 double amount = double.parse(_fundAmountController.text.replaceAll(",", ""));
-                                _firebaseServices.addAccountFunds(selectedAccount!, amount);
+                                final selectedAccount = context.read<AccountProvider>().selectedAccount;
+                                if (selectedAccount != null) {
+                                  _firebaseServices.addAccountFunds(selectedAccount, amount);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Funds added')),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Please select an account first')),
+                                  );
+                                }
                                 _fundAmountController.clear();
                                 Navigator.pop(context);
                               }

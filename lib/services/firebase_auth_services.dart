@@ -1,13 +1,14 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_otp/email_otp.dart';
+import 'package:finedger/providers/account_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import 'dart:math';
 class FirebaseAuthService {
   final _auth = FirebaseAuth.instance;
   final _db = FirebaseFirestore.instance;
-
 
   Future<User?> createUserWithEmailAndPassword(
     String email,
@@ -27,7 +28,7 @@ class FirebaseAuthService {
       });
       return credential.user;
     } catch (e) {
-      log('Something went wrong');
+      print('Something went wrong');
     }
     return null;
   }
@@ -37,7 +38,7 @@ class FirebaseAuthService {
       UserCredential credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
       return credential.user;
     } catch (e) {
-      log('Something went wrong');
+      print('Something went wrong');
     }
     return null;
   }
@@ -46,20 +47,26 @@ class FirebaseAuthService {
     try {
       await _auth.signOut();
     } catch (e) {
-      log('Something went wrong');
+      print('Something went wrong');
     }
   }
 
   Future<void> addExpense(
-    double amount,
-    String? category,
-    String description,
-    int date,
-  ) async {
+      BuildContext context,
+      double amount,
+      String? category,
+      String description,
+      int date,
+      ) async {
     String userId = _auth.currentUser!.uid;
+    String? selectedAccount = context.read<AccountProvider>().selectedAccount;
 
-    // Add the expense document
-    await _db.collection('users').doc(userId).collection('expenses').add({
+    if (selectedAccount == null) {
+      throw Exception('No account selected');
+    }
+
+    // Add the expense document to the selected account
+    await _db.collection('users').doc(userId).collection('accounts').doc(selectedAccount).collection('expenses').add({
       'description': description,
       'category': category,
       'date': date,
@@ -67,11 +74,21 @@ class FirebaseAuthService {
       'timeStamp': FieldValue.serverTimestamp(),
     });
 
-    // Check if the expense category matches a budget's description
+    // Deduct the expense amount from the account funds
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccount)
+        .update({'funds': FieldValue.increment(-amount)});
+
+    // Check if the expense category matches a budget's description in the selected account
     if (category != null) {
       final budgetQuerySnapshot = await _db
           .collection('users')
           .doc(userId)
+          .collection('accounts')
+          .doc(selectedAccount)
           .collection('budgets')
           .where('description', isEqualTo: category)
           .get();
@@ -81,106 +98,209 @@ class FirebaseAuthService {
         final budgetDoc = budgetQuerySnapshot.docs.first;
 
         // Get the current spentAmount
-        double currentSpentAmount = budgetDoc['spentAmount'] ?? 0.00;
+        double currentSpentAmount = (budgetDoc['spentAmount'] as num).toDouble() ?? 0.00;
 
         // Update the spentAmount by adding the expense amount
-        await _db.collection('users').doc(userId).collection('budgets').doc(budgetDoc.id).update({
+        await _db
+            .collection('users')
+            .doc(userId)
+            .collection('accounts')
+            .doc(selectedAccount)
+            .collection('budgets')
+            .doc(budgetDoc.id)
+            .update({
           'spentAmount': currentSpentAmount + amount,
         });
       }
     }
   }
 
-  Stream<List<Map<String, dynamic>>> getUserExpenses() {
+  Stream<List<Map<String, dynamic>>> getUserExpenses(BuildContext context) {
     String userId = _auth.currentUser!.uid;
+    String? selectedAccount = context.read<AccountProvider>().selectedAccount;
+
+    if (selectedAccount == null) {
+      throw Exception('No account selected');
+    }
+
     return _db
         .collection('users')
         .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccount)
         .collection('expenses')
-        .orderBy('date', descending: true)
+        .orderBy('timeStamp', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 
-  Future<void> addBudget(String description, int startDate, int endDate, double amount) async {
+  Future<void> addBudget(
+    BuildContext context,
+    String description,
+    int startDate,
+    int endDate,
+    double amount,
+  ) async {
     String userId = _auth.currentUser!.uid;
-    _db.collection('users').doc(userId).collection('budgets').add({
+    String? selectedAccount = context.read<AccountProvider>().selectedAccount;
+    Random random = Random();
+    int colorValue = Color.fromARGB(
+      255,
+      random.nextInt(256), // Random Red value (0-255)
+      random.nextInt(256), // Random Green value (0-255)
+      random.nextInt(256), // Random Blue value (0-255)
+    ).value;
+
+    if (selectedAccount == null) {
+      throw Exception('No account selected');
+    }
+
+    // Add the budget document to the selected account
+    await _db.collection('users').doc(userId).collection('accounts').doc(selectedAccount).collection('budgets').add({
       'description': description,
       'startDate': startDate,
       'endDate': endDate,
       'amount': amount,
       'spentAmount': 0.0,
+      'color': colorValue,
       'timeStamp': FieldValue.serverTimestamp(),
     });
   }
 
-  void addGoalFunds(String goalId, double amountToAdd) async {
-    // Reference to the specific goal document in Firestore
+  Future<void> addGoalFunds(BuildContext context, String goalId, double amountToAdd) async {
     String userId = _auth.currentUser!.uid;
-    DocumentReference goalRef = _db.collection('users').doc(userId).collection('goals').doc(goalId);
+    String? selectedAccount = context.read<AccountProvider>().selectedAccount;
+
+    if (selectedAccount == null) {
+      throw Exception('No account selected');
+    }
+
+    DocumentReference goalRef = _db
+        .collection('users')
+        .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccount)
+        .collection('goals')
+        .doc(goalId);
 
     try {
       // Get the current "Saved" amount
       DocumentSnapshot snapshot = await goalRef.get();
-      double currentSavedAmount = snapshot.get('amountSaved') ?? 0.00;
+      double currentSavedAmount = (snapshot.get('amountSaved') as num).toDouble() ?? 0.00;
 
       // Calculate the new "Saved" amount
       double newSavedAmount = currentSavedAmount + amountToAdd;
 
       // Update Firestore with the new amount
       await goalRef.update({'amountSaved': newSavedAmount});
-      log("Funds added successfully!");
+
+      // Deduct the added amount from the account funds
+      await _db
+          .collection('users')
+          .doc(userId)
+          .collection('accounts')
+          .doc(selectedAccount)
+          .update({'funds': FieldValue.increment(-amountToAdd)});
+
+      print("Funds added successfully!");
     } catch (error) {
-      log("Failed to add funds: $error");
+      print("Failed to add funds: \$error");
     }
   }
 
-  Stream<List<Map<String, dynamic>>> getUserBudgets() {
+  Stream<List<Map<String, dynamic>>> getUserBudgets(BuildContext context) {
     String userId = _auth.currentUser!.uid;
+    String? selectedAccount = context.read<AccountProvider>().selectedAccount;
+
+    if (selectedAccount == null) {
+      throw Exception('No account selected');
+    }
+
     return _db
         .collection('users')
         .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccount)
         .collection('budgets')
         .orderBy('timeStamp', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 
-  Future<void> addGoal(String description, int startDate, int endDate, double targetAmount) async {
+  Future<void> addGoal(
+    BuildContext context,
+    String description,
+    int startDate,
+    int endDate,
+
+    double targetAmount,
+  ) async {
     String userId = _auth.currentUser!.uid;
-    _db.collection('users').doc(userId).collection('goals').add({
+    String? selectedAccount = context.read<AccountProvider>().selectedAccount;
+    Random random = Random();
+    int colorValue = Color.fromARGB(
+      255,
+      random.nextInt(256), // Random Red value (0-255)
+      random.nextInt(256), // Random Green value (0-255)
+      random.nextInt(256), // Random Blue value (0-255)
+    ).value;
+
+    if (selectedAccount == null) {
+      throw Exception('No account selected');
+    }
+
+    // Add the goal document to the selected account
+    await _db.collection('users').doc(userId).collection('accounts').doc(selectedAccount).collection('goals').add({
       'description': description,
       'startDate': startDate,
       'endDate': endDate,
       'amountSaved': 0.00,
+      'color': colorValue,
       'targetAmount': targetAmount,
       'timeStamp': FieldValue.serverTimestamp(),
     });
   }
 
-  Future<List<DocumentSnapshot>> getUserGoals() async {
+  Stream<List<DocumentSnapshot>> getUserGoals(BuildContext context) {
     String userId = _auth.currentUser!.uid;
-    QuerySnapshot snapshot = await _db
+    String? selectedAccount = context.read<AccountProvider>().selectedAccount;
+
+    if (selectedAccount == null) {
+      throw Exception('No account selected');
+    }
+
+    return _db
         .collection('users')
         .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccount)
         .collection('goals')
         .orderBy('timeStamp', descending: true)
-        .get();
-
-    return snapshot.docs;  // Return the list of DocumentSnapshots directly
+        .snapshots()
+        .map((snapshot) => snapshot.docs);
   }
+
+
 
   Future<Map<String, dynamic>?> getUserFirstName() async {
     String userId = _auth.currentUser!.uid;
     DocumentSnapshot snapshot = await _db.collection('users').doc(userId).get();
     return snapshot.data() as Map<String, dynamic>?;
   }
-  
-  Stream<QuerySnapshot> expenseData() {
+
+  Stream<QuerySnapshot> expenseData(BuildContext context) {
     String userId = _auth.currentUser!.uid;
+    String? selectedAccount = context.read<AccountProvider>().selectedAccount;
+
+    if (selectedAccount == null) {
+      throw Exception('No account selected');
+    }
+
     return _db
         .collection('users')
         .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccount)
         .collection('expenses')
         .orderBy('timeStamp', descending: true)
         .snapshots();
@@ -189,7 +309,7 @@ class FirebaseAuthService {
   Future<void> createInitialAccount(String accountName) async {
     String userId = _auth.currentUser!.uid;
     _db.collection('users').doc(userId).collection('accounts').add({
-      'accountName' : accountName,
+      'accountName': accountName,
       'funds': 0.0,
       'timeStamp': FieldValue.serverTimestamp(),
     });
@@ -198,13 +318,7 @@ class FirebaseAuthService {
   Stream<double> streamFunds(String accountId) {
     String userId = FirebaseAuth.instance.currentUser!.uid;
 
-    return _db
-        .collection('users')
-        .doc(userId)
-        .collection('accounts')
-        .doc(accountId)
-        .snapshots()
-        .map((snapshot) {
+    return _db.collection('users').doc(userId).collection('accounts').doc(accountId).snapshots().map((snapshot) {
       if (snapshot.exists) {
         return snapshot.get('funds')?.toDouble() ?? 0.0;
       } else {
@@ -212,14 +326,11 @@ class FirebaseAuthService {
       }
     });
   }
+
   Future<void> addAccountFunds(String accountId, double amount) async {
     String userId = FirebaseAuth.instance.currentUser!.uid;
 
-    DocumentReference accountRef = _db
-        .collection('users')
-        .doc(userId)
-        .collection('accounts')
-        .doc(accountId);
+    DocumentReference accountRef = _db.collection('users').doc(userId).collection('accounts').doc(accountId);
 
     await _db.runTransaction((transaction) async {
       DocumentSnapshot accountSnapshot = await transaction.get(accountRef);
@@ -233,45 +344,9 @@ class FirebaseAuthService {
 
       transaction.update(accountRef, {'funds': newFunds});
     }).catchError((error) {
-      log("Failed to add funds: $error");
+      print("Failed to add funds: $error");
     });
   }
-
-
 }
 
 
-
-
-
-
-class EmailOTPSender {
-  EmailOTP myOtp = EmailOTP();
-  Future<void> sendOTPto(String email) async {
-    EmailOTP.config(
-      appEmail: 'finedger@email.com',
-      appName: 'FinEdger',
-      otpLength: 6,
-      emailTheme: EmailTheme.v1,
-      //expiry: 300000
-    );
-    var sendOTP = await EmailOTP.sendOTP(email: email);
-    if (sendOTP) {
-      log('OTP Sent');
-    } else {
-      log('Error');
-    }
-  }
-
-  Future<bool> verifyOTP(String otp) async {
-    if (EmailOTP.verifyOTP(otp: otp)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  String? getOTP() {
-    return EmailOTP.getOTP();
-  }
-}

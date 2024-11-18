@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:finedger/constants/constants.dart';
 import 'package:finedger/screens/getting_started/phone_verification.dart';
 import 'package:finedger/screens/getting_started/successful_signup.dart';
+import 'package:finedger/services/email_otp_sender.dart';
 import 'package:finedger/services/firebase_auth_services.dart';
 import 'package:finedger/widgets/for_gettingstarted.dart';
 import 'package:flutter/material.dart';

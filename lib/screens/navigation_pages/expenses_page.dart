@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:finedger/providers/account_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../constants/constants.dart';
 import '../../services/firebase_auth_services.dart';
@@ -34,24 +36,51 @@ class _ExpensesPageState extends State<ExpensesPage> {
   @override
   void initState() {
     super.initState();
-    fetchBudgetDescriptions();
+    fetchBudgetDescriptions(context);
   }
 
-  Future<void> fetchBudgetDescriptions() async {
+  Future<void> fetchBudgetDescriptions(BuildContext context) async {
     String userId = FirebaseAuth.instance.currentUser!.uid;
+    String? selectedAccount = context.read<AccountProvider>().selectedAccount;
 
-    // Fetch descriptions from the Firestore budgets collection
-    final snapshot = await _db.collection('users').doc(userId).collection('budgets').get();
+    if (selectedAccount == null) {
+      throw Exception('No account selected');
+    }
 
-    // Extract descriptions and add them to the list
+    // Fetch descriptions from the Firestore budgets collection for the selected account
+    final snapshot = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccount)
+        .collection('budgets')
+        .get();
+
+    // Extract descriptions and add them to the list, excluding budgets where spentAmount equals amount
     setState(() {
-      budgetDescriptions = snapshot.docs.map((doc) => doc['description'] as String).toList();
+      budgetDescriptions = snapshot.docs
+          .where((doc) => doc['spentAmount'] != doc['amount'])
+          .map((doc) => doc['description'] as String)
+          .toList();
     });
   }
 
-  void onButtonPressed(int index) {
+  void onTimeFrameSelected(int index) {
     setState(() {
       selectedIndex = index;
+
+      // Update the selectedTimeframe enum accordingly
+      switch (index) {
+        case 0:
+          selectedTimeframe = TimeFrame.sevenDays;
+          break;
+        case 1:
+          selectedTimeframe = TimeFrame.thirtyDays;
+          break;
+        case 2:
+          selectedTimeframe = TimeFrame.sixMonths;
+          break;
+      }
     });
   }
 
@@ -98,7 +127,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                             isScrollControlled: true,
                             context: context,
                             builder: (BuildContext context) {
-                              return FocusScope(child: ExpenseModal(screenHeight, context));
+                              return FocusScope(child: expenseModal(screenHeight, context));
                             },
                           );
                         },
@@ -114,15 +143,14 @@ class _ExpensesPageState extends State<ExpensesPage> {
               // ),
               StreamBuilder<QuerySnapshot>(
                 key: UniqueKey(),
-                stream: _firebaseServices.expenseData(),
+                stream: _firebaseServices.expenseData(context),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }
-
                   Map<DateTime, double> aggregatedData = {};
 
-                  snapshot.data!.docs.forEach((doc) {
+                  for (var doc in snapshot.data!.docs) {
                     final data = doc.data() as Map<String, dynamic>;
 
                     int dateValue = data['date'] ?? 0; // Default to 0 if date is null
@@ -140,46 +168,107 @@ class _ExpensesPageState extends State<ExpensesPage> {
                         aggregatedData[dateOnly] = amountValue;
                       }
                     }
-                  });
+                  }
 
-                  // Step 2: Convert the map to a list of DataPoint objects
-                  _chartData = aggregatedData.entries.map((entry) {
+                  DateTime now = DateTime.now();
+                  DateTime filterStartDate =
+                      now.subtract(const Duration(days: 30)); // Default value, e.g., last 30 days
+                  int interval;
+                  DateTimeIntervalType intervalType;
+                  DateFormat dateFormat;
+
+                  switch (selectedTimeframe) {
+                    case TimeFrame.sevenDays:
+                      interval = 1;
+                      intervalType = DateTimeIntervalType.days;
+                      filterStartDate = now.subtract(const Duration(days: 7));
+                      dateFormat = DateFormat.yMd();
+                      break;
+                    case TimeFrame.thirtyDays:
+                      interval = 5;
+                      intervalType = DateTimeIntervalType.days;
+                      filterStartDate = now.subtract(const Duration(days: 30));
+                      dateFormat = DateFormat.yMd();
+                      break;
+                    case TimeFrame.sixMonths:
+                      interval = 1;
+                      intervalType = DateTimeIntervalType.months;
+                      filterStartDate = now.subtract(const Duration(days: 180));
+                      dateFormat = DateFormat.Md();
+                      break;
+                  }
+
+                  Map<DateTime, double> filteredData =
+                      Map.fromEntries(aggregatedData.entries.where((entry) => entry.key.isAfter(filterStartDate)));
+
+                  _chartData = filteredData.entries.map((entry) {
                     return DataPoint(entry.key, entry.value);
                   }).toList();
 
-                  // Step 3: Sort the data to make sure it's in chronological order
                   _chartData.sort((a, b) => a.date.compareTo(b.date));
 
-                  return SfCartesianChart(
-                    key: UniqueKey(),
-                    primaryXAxis: const DateTimeAxis(
-                      name: 'Date',
-                      intervalType: DateTimeIntervalType.days,
-                    ),
-                    primaryYAxis: const NumericAxis(
-                      name: 'Amount',
-                      minimum: 0,
-                    ),
-                    series: <CartesianSeries<DataPoint, DateTime>>[
-                      AreaSeries<DataPoint, DateTime>(
-                        color: kGreenColor.withOpacity(0.5),
-                        name: 'Expenses',
-                        dataSource: _chartData,
-                        xValueMapper: (DataPoint data, _) => data.date,
-                        yValueMapper: (DataPoint data, _) => data.value,
-                        borderGradient: LinearGradient(
-                          colors: [Colors.blue, Colors.red],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        markerSettings: const MarkerSettings(
-                          isVisible: true,
-                          shape: DataMarkerType.circle,
-                          width: 10,
-                          height: 10,
-                        ),
+                  DateTime minimumDate = filterStartDate;
+                  DateTime maximumDate = now; // Always set the maximum date to now
+
+                  double maxYValue = _chartData.isNotEmpty
+                      ? _chartData.map((data) => data.value).reduce((a, b) => a > b ? a : b)
+                      : 0.0;
+
+// Set the number format based on the max Y-axis value, with a peso sign
+                  NumberFormat yAxisNumberFormat;
+                  if (maxYValue >= 1000) {
+                    yAxisNumberFormat = NumberFormat.compactCurrency(
+                      symbol: '₱',
+                      decimalDigits: 1, // Customize decimal places if needed
+                    );
+                  } else {
+                    yAxisNumberFormat = NumberFormat.currency(
+                      symbol: '₱',
+                      decimalDigits: 0, // No decimal places for smaller values
+                    );
+                  }
+
+                  return SizedBox(
+                    height: screenHeight * 0.3,
+                    child: SfCartesianChart(
+                      key: UniqueKey(),
+                      primaryXAxis: DateTimeAxis(
+                        name: 'Date',
+                        minimum: minimumDate,
+                        maximum: maximumDate,
+                        interval: interval.toDouble(),
+                        intervalType: intervalType,
+                        dateFormat: DateFormat.MMMd(),
+                        edgeLabelPlacement: EdgeLabelPlacement.shift,
                       ),
-                    ],
+                      primaryYAxis: NumericAxis(
+                        numberFormat: yAxisNumberFormat,
+                        maximum: maxYValue,
+                        name: 'Amount',
+                        minimum: 0,
+                      ),
+                      series: <CartesianSeries<DataPoint, DateTime>>[
+                        AreaSeries<DataPoint, DateTime>(
+                          color: kGreenColor.withOpacity(0.5),
+                          name: 'Expenses',
+                          dataSource: _chartData,
+                          xValueMapper: (DataPoint data, _) => data.date,
+                          yValueMapper: (DataPoint data, _) => data.value,
+                          borderGradient: const LinearGradient(
+                            colors: [Colors.blue, Colors.red],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          markerSettings: const MarkerSettings(
+                            isVisible: true,
+                            shape: DataMarkerType.circle,
+                            width: 7,
+                            height: 7,
+                            color: kBlueColor,
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
@@ -192,29 +281,21 @@ class _ExpensesPageState extends State<ExpensesPage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
-                        onPressed: () => onButtonPressed(0),
+                        onPressed: () => onTimeFrameSelected(0),
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
-                          backgroundColor: selectedIndex == 0
-                              ? Colors.blue.shade100
-                              : Colors.white,
+                          backgroundColor: selectedIndex == 0 ? Colors.blue.shade100 : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20.0),
-                            side: BorderSide(
-                                color: selectedIndex == 0
-                                    ? Colors.white
-                                    : Colors.grey.shade300),
+                            side: BorderSide(color: selectedIndex == 0 ? Colors.white : Colors.grey.shade300),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                         ),
                         child: Text(
                           '7 days',
                           style: TextStyle(
-                            color: selectedIndex == 0
-                                ? Colors.white
-                                : Colors.black,
-                            fontWeight:
-                            selectedIndex == 0 ? FontWeight.bold : FontWeight.normal,
+                            color: selectedIndex == 0 ? Colors.white : Colors.black,
+                            fontWeight: selectedIndex == 0 ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
                       ),
@@ -225,29 +306,21 @@ class _ExpensesPageState extends State<ExpensesPage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
-                        onPressed: () => onButtonPressed(1),
+                        onPressed: () => onTimeFrameSelected(1),
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
-                          backgroundColor: selectedIndex == 1
-                              ? Colors.blue.shade100
-                              : Colors.white,
+                          backgroundColor: selectedIndex == 1 ? Colors.blue.shade100 : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20.0),
-                            side: BorderSide(
-                                color: selectedIndex == 1
-                                    ? Colors.white
-                                    : Colors.grey.shade300),
+                            side: BorderSide(color: selectedIndex == 1 ? Colors.white : Colors.grey.shade300),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                         ),
                         child: Text(
                           '30 days',
                           style: TextStyle(
-                            color: selectedIndex == 1
-                                ? Colors.white
-                                : Colors.black,
-                            fontWeight:
-                            selectedIndex == 1 ? FontWeight.bold : FontWeight.normal,
+                            color: selectedIndex == 1 ? Colors.white : Colors.black,
+                            fontWeight: selectedIndex == 1 ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
                       ),
@@ -258,29 +331,21 @@ class _ExpensesPageState extends State<ExpensesPage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ElevatedButton(
-                        onPressed: () => onButtonPressed(2),
+                        onPressed: () => onTimeFrameSelected(2),
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
-                          backgroundColor: selectedIndex == 2
-                              ? Colors.blue.shade100
-                              : Colors.white,
+                          backgroundColor: selectedIndex == 2 ? Colors.blue.shade100 : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20.0),
-                            side: BorderSide(
-                                color: selectedIndex == 2
-                                    ? Colors.white
-                                    : Colors.grey.shade300),
+                            side: BorderSide(color: selectedIndex == 2 ? Colors.white : Colors.grey.shade300),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                         ),
                         child: Text(
                           '6 months',
                           style: TextStyle(
-                            color: selectedIndex == 2
-                                ? Colors.white
-                                : Colors.black,
-                            fontWeight:
-                            selectedIndex == 2 ? FontWeight.bold : FontWeight.normal,
+                            color: selectedIndex == 2 ? Colors.white : Colors.black,
+                            fontWeight: selectedIndex == 2 ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
                       ),
@@ -290,7 +355,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
               ),
               const SizedBox(height: 10.0),
               StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: _firebaseServices.getUserExpenses(),
+                  stream: _firebaseServices.getUserExpenses(context),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: LinearProgressIndicator());
@@ -569,7 +634,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
     );
   }
 
-  ClipRRect ExpenseModal(double screenHeight, BuildContext context) {
+  ClipRRect expenseModal(double screenHeight, BuildContext context) {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(40.0),
@@ -778,7 +843,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                           double amount = double.parse(_amountController.text.replaceAll(",", ""));
                           if (_formKey.currentState!.validate()) {
                             _firebaseServices.addExpense(
-                                amount, selectedValue, _expenseNameController.text, expenseDate);
+                                context, amount, selectedValue, _expenseNameController.text, expenseDate);
                             setState(() {
                               selectedValue = null;
                             });
@@ -824,3 +889,7 @@ class DataPoint {
 
   DataPoint(this.date, this.value);
 }
+
+enum TimeFrame { sevenDays, thirtyDays, sixMonths }
+
+TimeFrame selectedTimeframe = TimeFrame.sevenDays;
