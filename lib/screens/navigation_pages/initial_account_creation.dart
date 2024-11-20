@@ -1,8 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finedger/main.dart';
-import 'package:finedger/screens/navigation_pages/dashboard_page.dart';
+import 'package:finedger/providers/account_provider.dart';
 import 'package:finedger/services/firebase_auth_services.dart';
 import 'package:finedger/widgets/for_gettingstarted.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../constants/constants.dart';
 
@@ -54,15 +57,8 @@ class _InitialAccountCreationState extends State<InitialAccountCreation> {
                 buttonLabel: 'Save',
                 onPress: (){
                   if(_formKey.currentState!.validate()){
-                    _firebase.createInitialAccount(_accountNameController.text);
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (BuildContext context) {
-                          return const FinEdger();
-                        },
-                      ),
-                    );
+                    _firebase.createInitialAccount(context, _accountNameController.text);
+
                   }
                 })
           ],
@@ -70,4 +66,6 @@ class _InitialAccountCreationState extends State<InitialAccountCreation> {
       ),
     );
   }
+
 }
+

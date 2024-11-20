@@ -2,7 +2,7 @@
   "project_info": {
     "project_number": "217026675332",
     "project_id": "finedger-fed20",
-    "storage_bucket": "finedger-fed20.appspot.com"
+    "storage_bucket": "finedger-fed20.firebasestorage.app"
   },
   "client": [
     {

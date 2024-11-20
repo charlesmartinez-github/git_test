@@ -1,13 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finedger/providers/account_provider.dart';
+import 'package:finedger/widgets/graphs.dart';
+import 'package:finedger/widgets/list_display.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../constants/constants.dart';
 import '../../services/firebase_auth_services.dart';
+import 'package:finedger/models/time_frame.dart';
+
 
 class ExpensesPage extends StatefulWidget {
   final List<String>? budgetCategories;
@@ -20,7 +23,6 @@ class ExpensesPage extends StatefulWidget {
 class _ExpensesPageState extends State<ExpensesPage> {
   final _firebaseServices = FirebaseAuthService();
   final _db = FirebaseFirestore.instance;
-  final _auth = FirebaseAuth.instance;
   final _formKey = GlobalKey<FormState>();
   final _expenseNameController = TextEditingController();
   final _categoryController = TextEditingController();
@@ -31,7 +33,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
   String? selectedValue;
   DateTime? selectedDate;
   List<String> budgetDescriptions = [];
-  List<DataPoint> _chartData = [];
+
   int selectedIndex = 0;
   @override
   void initState() {
@@ -57,13 +59,15 @@ class _ExpensesPageState extends State<ExpensesPage> {
         .get();
 
     // Extract descriptions and add them to the list, excluding budgets where spentAmount equals amount
-    setState(() {
-      budgetDescriptions = snapshot.docs
-          .where((doc) => doc['spentAmount'] != doc['amount'])
-          .map((doc) => doc['description'] as String)
-          .toList();
-    });
+    // and where endDate is equal to or has passed the current date
+    DateTime now = DateTime.now();
+    budgetDescriptions = snapshot.docs
+        .where((doc) => doc['spentAmount'] != doc['amount'] &&
+        (doc['endDate'] == null || (doc['endDate'] as num) > now.millisecondsSinceEpoch))
+        .map((doc) => doc['description'] as String)
+        .toList();
   }
+
 
   void onTimeFrameSelected(int index) {
     setState(() {
@@ -103,7 +107,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.sizeOf(context).height;
-    final screenWidth = MediaQuery.sizeOf(context).width;
+    //final screenWidth = MediaQuery.sizeOf(context).width;
+    String? selectedAccount = context.watch<AccountProvider>().selectedAccount;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -137,145 +142,10 @@ class _ExpensesPageState extends State<ExpensesPage> {
                   )
                 ],
               ),
-              // Text(
-              //   '$monthFormatter Spending',
-              //   style: const TextStyle(fontSize: 16.0),
-              // ),
-              StreamBuilder<QuerySnapshot>(
-                key: UniqueKey(),
-                stream: _firebaseServices.expenseData(context),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  Map<DateTime, double> aggregatedData = {};
-
-                  for (var doc in snapshot.data!.docs) {
-                    final data = doc.data() as Map<String, dynamic>;
-
-                    int dateValue = data['date'] ?? 0; // Default to 0 if date is null
-                    double amountValue = data['amount'] ?? 0; // Default to 0 if amount is null
-
-                    if (dateValue != 0) {
-                      DateTime date = DateTime.fromMillisecondsSinceEpoch(dateValue);
-
-                      // Normalize to just the date part (ignoring time) to group all expenses by day
-                      DateTime dateOnly = DateTime(date.year, date.month, date.day);
-
-                      if (aggregatedData.containsKey(dateOnly)) {
-                        aggregatedData[dateOnly] = aggregatedData[dateOnly]! + amountValue;
-                      } else {
-                        aggregatedData[dateOnly] = amountValue;
-                      }
-                    }
-                  }
-
-                  DateTime now = DateTime.now();
-                  DateTime filterStartDate =
-                      now.subtract(const Duration(days: 30)); // Default value, e.g., last 30 days
-                  int interval;
-                  DateTimeIntervalType intervalType;
-                  DateFormat dateFormat;
-
-                  switch (selectedTimeframe) {
-                    case TimeFrame.sevenDays:
-                      interval = 1;
-                      intervalType = DateTimeIntervalType.days;
-                      filterStartDate = now.subtract(const Duration(days: 7));
-                      dateFormat = DateFormat.yMd();
-                      break;
-                    case TimeFrame.thirtyDays:
-                      interval = 5;
-                      intervalType = DateTimeIntervalType.days;
-                      filterStartDate = now.subtract(const Duration(days: 30));
-                      dateFormat = DateFormat.yMd();
-                      break;
-                    case TimeFrame.sixMonths:
-                      interval = 1;
-                      intervalType = DateTimeIntervalType.months;
-                      filterStartDate = now.subtract(const Duration(days: 180));
-                      dateFormat = DateFormat.Md();
-                      break;
-                  }
-
-                  Map<DateTime, double> filteredData =
-                      Map.fromEntries(aggregatedData.entries.where((entry) => entry.key.isAfter(filterStartDate)));
-
-                  _chartData = filteredData.entries.map((entry) {
-                    return DataPoint(entry.key, entry.value);
-                  }).toList();
-
-                  _chartData.sort((a, b) => a.date.compareTo(b.date));
-
-                  DateTime minimumDate = filterStartDate;
-                  DateTime maximumDate = now; // Always set the maximum date to now
-
-                  double maxYValue = _chartData.isNotEmpty
-                      ? _chartData.map((data) => data.value).reduce((a, b) => a > b ? a : b)
-                      : 0.0;
-
-// Set the number format based on the max Y-axis value, with a peso sign
-                  NumberFormat yAxisNumberFormat;
-                  if (maxYValue >= 1000) {
-                    yAxisNumberFormat = NumberFormat.compactCurrency(
-                      symbol: '₱',
-                      decimalDigits: 1, // Customize decimal places if needed
-                    );
-                  } else {
-                    yAxisNumberFormat = NumberFormat.currency(
-                      symbol: '₱',
-                      decimalDigits: 0, // No decimal places for smaller values
-                    );
-                  }
-
-                  return SizedBox(
-                    height: screenHeight * 0.3,
-                    child: SfCartesianChart(
-                      key: UniqueKey(),
-                      primaryXAxis: DateTimeAxis(
-                        name: 'Date',
-                        minimum: minimumDate,
-                        maximum: maximumDate,
-                        interval: interval.toDouble(),
-                        intervalType: intervalType,
-                        dateFormat: DateFormat.MMMd(),
-                        edgeLabelPlacement: EdgeLabelPlacement.shift,
-                      ),
-                      primaryYAxis: NumericAxis(
-                        numberFormat: yAxisNumberFormat,
-                        maximum: maxYValue,
-                        name: 'Amount',
-                        minimum: 0,
-                      ),
-                      series: <CartesianSeries<DataPoint, DateTime>>[
-                        AreaSeries<DataPoint, DateTime>(
-                          color: kGreenColor.withOpacity(0.5),
-                          name: 'Expenses',
-                          dataSource: _chartData,
-                          xValueMapper: (DataPoint data, _) => data.date,
-                          yValueMapper: (DataPoint data, _) => data.value,
-                          borderGradient: const LinearGradient(
-                            colors: [Colors.blue, Colors.red],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          markerSettings: const MarkerSettings(
-                            isVisible: true,
-                            shape: DataMarkerType.circle,
-                            width: 7,
-                            height: 7,
-                            color: kBlueColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+              ExpenseChart(stream: _firebaseServices.expenseData(selectedAccount!), selectedTimeframe: selectedTimeframe),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
-                  // Button for 7 Days
                   // Button for 7 Days
                   Expanded(
                     child: Padding(
@@ -354,283 +224,15 @@ class _ExpensesPageState extends State<ExpensesPage> {
                 ],
               ),
               const SizedBox(height: 10.0),
-              StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: _firebaseServices.getUserExpenses(context),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: LinearProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text("Error: ${snapshot.error}"));
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text("No expense found"));
-                    } else {
-                      final expenses = snapshot.data!;
-                      return ListView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: expenses.length,
-                          itemBuilder: (context, index) {
-                            final expense = expenses[index];
-                            DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(expense['date']);
-                            String expenseDate = DateFormat('MMMM d').format(dateTime);
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: Card(
-                                child: ListTile(
-                                  // tileColor: const Color(0xFFfbfcfb),
-                                  // shape: RoundedRectangleBorder(
-                                  //     borderRadius: BorderRadius.circular(10.0),
-                                  //     side: const BorderSide(
-                                  //         color: Color(0xFFcbcbcb))),
-                                  leading: CircleAvatar(child: Text(expense['description'][0])),
-                                  title: Text(expense['description'] ?? 'No Description'),
-                                  subtitle: Text(
-                                    '${expense['category'] ?? 'No category'}, $expenseDate',
-                                    style: const TextStyle(fontSize: 12.0, color: kGrayColor),
-                                  ),
-                                  trailing: Text(
-                                    'P${expense['amount'].toString()}',
-                                    style: const TextStyle(color: Colors.red),
-                                  ),
-                                ),
-                              ),
-                            );
-                          });
-                    }
-                  }),
+              ExpenseListWidget(
+                  firebaseServices: _firebaseServices,
+                  selectedAccount: selectedAccount,
+              ),
             ],
           ),
         ),
       ),
-      // appBar: AppBar(
-      //   forceMaterialTransparency: true,
-      //   title: Text(formatter),
-      //   centerTitle: true,
-      //   actions: <Widget>[
-      //     IconButton(
-      //       onPressed: () {},
-      //       icon: const Icon(FontAwesomeIcons.comment),
-      //     ),
-      //     IconButton(
-      //       onPressed: () {},
-      //       icon: const Icon(FontAwesomeIcons.bell),
-      //     ),
-      //   ],
-      // ),
-      // drawer: Drawer(
-      //   backgroundColor: Colors.white,
-      //   child: ListView(
-      //     padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
-      //     children: [
-      //       const DrawerHeader(
-      //         child: Text('header'),
-      //       ),
-      //       Container(
-      //         padding: const EdgeInsets.symmetric(horizontal: 8),
-      //         decoration: BoxDecoration(
-      //           color: const Color(0xFFfbfcfb),
-      //           border: Border.all(color: Colors.grey),
-      //           borderRadius: const BorderRadius.all(
-      //             Radius.circular(10),
-      //           ),
-      //         ),
-      //         child: ListTile(
-      //           dense: true,
-      //           leading: const Icon(
-      //             FontAwesomeIcons.user,
-      //             size: 16,
-      //           ),
-      //           title: const Text('Profile & Settings'),
-      //           onTap: () {
-      //             Navigator.push(
-      //               context,
-      //               MaterialPageRoute(
-      //                 builder: (BuildContext context) {
-      //                   return const ProfileSettings();
-      //                 },
-      //               ),
-      //             );
-      //           },
-      //         ),
-      //       ),
-      //       SizedBox(height: screenHeight * 0.007),
-      //       Container(
-      //         padding: const EdgeInsets.symmetric(horizontal: 8),
-      //         decoration: BoxDecoration(
-      //           color: const Color(0xFFfbfcfb),
-      //           border: Border.all(color: Colors.grey),
-      //           borderRadius: const BorderRadius.all(
-      //             Radius.circular(10),
-      //           ),
-      //         ),
-      //         child: ListTile(
-      //           dense: true,
-      //           leading: const Icon(
-      //             FontAwesomeIcons.coins,
-      //             size: 16,
-      //           ),
-      //           title: const Text('Manage Expenses'),
-      //           onTap: () {
-      //             Navigator.push(
-      //               context,
-      //               MaterialPageRoute(
-      //                 builder: (BuildContext context) {
-      //                   return const ProfileSettings();
-      //                 },
-      //               ),
-      //             );
-      //           },
-      //         ),
-      //       ),
-      //       SizedBox(height: screenHeight * 0.007),
-      //       Container(
-      //         padding: const EdgeInsets.symmetric(horizontal: 8),
-      //         decoration: BoxDecoration(
-      //           color: const Color(0xFFfbfcfb),
-      //           border: Border.all(color: Colors.grey),
-      //           borderRadius: const BorderRadius.all(
-      //             Radius.circular(10),
-      //           ),
-      //         ),
-      //         child: ListTile(
-      //           dense: true,
-      //           leading: const Icon(
-      //             FontAwesomeIcons.moneyBills,
-      //             size: 16,
-      //           ),
-      //           title: const Text('Manage Budget'),
-      //           onTap: () {
-      //             Navigator.push(
-      //               context,
-      //               MaterialPageRoute(
-      //                 builder: (BuildContext context) {
-      //                   return const ProfileSettings();
-      //                 },
-      //               ),
-      //             );
-      //           },
-      //         ),
-      //       ),
-      //       SizedBox(height: screenHeight * 0.007),
-      //       Container(
-      //         padding: const EdgeInsets.symmetric(horizontal: 8),
-      //         decoration: BoxDecoration(
-      //           color: const Color(0xFFfbfcfb),
-      //           border: Border.all(color: Colors.grey),
-      //           borderRadius: const BorderRadius.all(
-      //             Radius.circular(10),
-      //           ),
-      //         ),
-      //         child: ListTile(
-      //           dense: true,
-      //           leading: const Icon(
-      //             FontAwesomeIcons.piggyBank,
-      //             size: 16,
-      //           ),
-      //           title: const Text('Manage Goals'),
-      //           onTap: () {
-      //             Navigator.push(
-      //               context,
-      //               MaterialPageRoute(
-      //                 builder: (BuildContext context) {
-      //                   return const ProfileSettings();
-      //                 },
-      //               ),
-      //             );
-      //           },
-      //         ),
-      //       ),
-      //       SizedBox(height: screenHeight * 0.007),
-      //       Container(
-      //         padding: const EdgeInsets.symmetric(horizontal: 8),
-      //         decoration: BoxDecoration(
-      //           color: const Color(0xFFfbfcfb),
-      //           border: Border.all(color: Colors.grey),
-      //           borderRadius: const BorderRadius.all(
-      //             Radius.circular(10),
-      //           ),
-      //         ),
-      //         child: ListTile(
-      //           dense: true,
-      //           leading: const Icon(
-      //             FontAwesomeIcons.squarePollVertical,
-      //             size: 16,
-      //           ),
-      //           title: const Text('Dashboard'),
-      //           onTap: () {
-      //             Navigator.push(
-      //               context,
-      //               MaterialPageRoute(
-      //                 builder: (BuildContext context) {
-      //                   return const ProfileSettings();
-      //                 },
-      //               ),
-      //             );
-      //           },
-      //         ),
-      //       ),
-      //       SizedBox(height: screenHeight * 0.007),
-      //       Container(
-      //         padding: const EdgeInsets.symmetric(horizontal: 8),
-      //         decoration: BoxDecoration(
-      //           color: const Color(0xFFfbfcfb),
-      //           border: Border.all(color: Colors.grey),
-      //           borderRadius: const BorderRadius.all(
-      //             Radius.circular(10),
-      //           ),
-      //         ),
-      //         child: ListTile(
-      //           dense: true,
-      //           leading: const Icon(
-      //             FontAwesomeIcons.unlock,
-      //             size: 16,
-      //           ),
-      //           title: const Text('Change Password'),
-      //           onTap: () {
-      //             Navigator.push(
-      //               context,
-      //               MaterialPageRoute(
-      //                 builder: (BuildContext context) {
-      //                   return const ProfileSettings();
-      //                 },
-      //               ),
-      //             );
-      //           },
-      //         ),
-      //       ),
-      //       SizedBox(height: screenHeight * 0.007),
-      //       Container(
-      //         padding: const EdgeInsets.symmetric(horizontal: 8),
-      //         decoration: BoxDecoration(
-      //           color: const Color(0xFFfbfcfb),
-      //           border: Border.all(color: Colors.grey),
-      //           borderRadius: const BorderRadius.all(
-      //             Radius.circular(10),
-      //           ),
-      //         ),
-      //         child: ListTile(
-      //           dense: true,
-      //           leading: const Icon(
-      //             FontAwesomeIcons.arrowRightFromBracket,
-      //             size: 16,
-      //           ),
-      //           title: const Text('Sign out'),
-      //           onTap: () {
-      //             _firebaseServices.signOut();
-      //             Navigator.pushReplacement(
-      //               context,
-      //               MaterialPageRoute(
-      //                 builder: (BuildContext context) {
-      //                   return const LoginPage();
-      //                 },
-      //               ),
-      //             );
-      //           },
-      //         ),
-      //       ),
-      //     ],
-      //   ),
-      // ),
+
     );
   }
 
@@ -889,7 +491,3 @@ class DataPoint {
 
   DataPoint(this.date, this.value);
 }
-
-enum TimeFrame { sevenDays, thirtyDays, sixMonths }
-
-TimeFrame selectedTimeframe = TimeFrame.sevenDays;

@@ -183,7 +183,7 @@ class _EmailVerificationState extends State<EmailVerification> {
     final user = await _auth.createUserWithEmailAndPassword(widget.email,
         widget.password, widget.firstName, widget.lastName, widget.phoneNumber);
     if (user != null) {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (BuildContext context) {

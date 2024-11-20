@@ -1,5 +1,6 @@
 import 'package:finedger/main.dart';
 import 'package:finedger/screens/getting_started/login_page.dart';
+import 'package:finedger/screens/navigation_pages/initial_account_creation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -54,7 +55,7 @@ class SuccessfulSignup extends StatelessWidget {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (BuildContext context) {
-                          return const FinEdger();
+                          return const InitialAccountCreation();
                         }),
                       );
                     },

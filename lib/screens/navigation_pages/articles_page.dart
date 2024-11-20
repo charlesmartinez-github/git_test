@@ -49,7 +49,7 @@ class _ArticlesPageState extends State<ArticlesPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Padding(
-        padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 25.0),
+        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 25.0),
         child: Column(
           children: <Widget>[
             Container(
@@ -67,10 +67,10 @@ class _ArticlesPageState extends State<ArticlesPage> {
                 ),
               ),
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
             Expanded(
               child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   childAspectRatio: 0.8,
                   crossAxisSpacing: 10,
@@ -101,14 +101,14 @@ class _ArticlesPageState extends State<ArticlesPage> {
                             ListTile(
                               title: Text(
                                 article['title']!,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               subtitle: Text(article['date']!,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.grey,
                                   )),
                             ),

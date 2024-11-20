@@ -18,6 +18,7 @@ class ProfileSettings extends StatefulWidget {
 class _ProfileSettingsState extends State<ProfileSettings> {
   @override
   Widget build(BuildContext context) {
+
     final screenHeight = MediaQuery.sizeOf(context).height;
     final screenWidth = MediaQuery.sizeOf(context).width;
 

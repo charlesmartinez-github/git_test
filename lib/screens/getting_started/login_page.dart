@@ -1,8 +1,10 @@
+import 'package:finedger/providers/account_provider.dart';
 import 'package:finedger/screens/navigation_pages/navigation.dart';
 import 'package:finedger/services/firebase_auth_services.dart';
 import 'package:flutter/material.dart';
 import 'package:finedger/widgets/for_gettingstarted.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import 'signup_page.dart';
 import 'package:finedger/constants/constants.dart';
 
@@ -195,12 +197,14 @@ class _LoginPageState extends State<LoginPage> {
     );
     if (user != null) {
       // Check if the widget is still mounted
+
       if (context.mounted) {
+        context.read<AccountProvider>().setSelectedAccount(null);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (BuildContext context) {
-              return const Navigation();
+              return const Navigation(passedPageIndex: 0);
             },
           ),
         );
