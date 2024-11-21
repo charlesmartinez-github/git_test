@@ -191,6 +191,24 @@ class FirebaseAuthService {
       'timeStamp': FieldValue.serverTimestamp(),
     });
   }
+  Future<void> updateBudget(
+      String selectedAccount,
+      String budgetId,
+      Map<String, dynamic> updatedFields,
+      ) async {
+    String userId = _auth.currentUser!.uid;
+
+    // Update the budget document in the selected account
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccount)
+        .collection('budgets')
+        .doc(budgetId)
+        .update(updatedFields);
+  }
+
 
 
   Future<void> addGoalFunds(String selectedAccount, String goalId, double amountToAdd) async {
@@ -205,9 +223,10 @@ class FirebaseAuthService {
         .doc(goalId);
 
     try {
-      // Get the current "Saved" amount
+      // Get the current goal details
       DocumentSnapshot snapshot = await goalRef.get();
       double currentSavedAmount = (snapshot.get('amountSaved') as num).toDouble() ?? 0.00;
+      String goalName = snapshot.get('description') ?? 'Unknown Goal';
 
       // Calculate the new "Saved" amount
       double newSavedAmount = currentSavedAmount + amountToAdd;
@@ -223,11 +242,28 @@ class FirebaseAuthService {
           .doc(selectedAccount)
           .update({'funds': FieldValue.increment(-amountToAdd)});
 
+      // Add the transaction to goalFundsHistory
+      await _db
+          .collection('users')
+          .doc(userId)
+          .collection('accounts')
+          .doc(selectedAccount)
+          .collection('goalFundsHistory')
+          .add({
+        'goalId': goalId,
+        'goalName': goalName,
+        'addedAmount': amountToAdd,
+        'date': DateTime.now().millisecondsSinceEpoch,
+        'timeStamp': FieldValue.serverTimestamp(),
+      });
+
       print("Funds added successfully!");
     } catch (error) {
       print("Failed to add funds: $error");
     }
   }
+
+
 
 
   // Stream<List<Map<String, dynamic>>> getUserBudgets(BuildContext context) {
@@ -259,14 +295,46 @@ class FirebaseAuthService {
         .collection('budgets')
         .orderBy('timeStamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => {
-      ...doc.data(),
-      'id': doc.id,
+        .map((snapshot) => snapshot.docs.map((doc) {
+      // Map document data and include document ID
+      return {
+        ...doc.data(),
+        'id': doc.id,
+      };
     }).where((doc) {
+      // Ensure expired budgets are also retrieved
       final endDate = (doc['endDate'] as num?)?.toInt();
-      return endDate == null || endDate > DateTime.now().millisecondsSinceEpoch;
+      return endDate != null; // Return all budgets, expired or not
     }).toList());
   }
+
+  Future<double> getAccountFunds(String selectedAccount) async {
+    String userId = _auth.currentUser!.uid;
+
+    try {
+      // Get the account document for the selected account
+      DocumentSnapshot accountSnapshot = await _db
+          .collection('users')
+          .doc(userId)
+          .collection('accounts')
+          .doc(selectedAccount)
+          .get();
+
+      if (accountSnapshot.exists) {
+        // Retrieve the funds value from the account document
+        double funds = accountSnapshot.get('funds')?.toDouble() ?? 0.0;
+        return funds;
+      } else {
+        return 0.0; // Return 0 if the account document does not exist
+      }
+    } catch (e) {
+      // Handle any errors (e.g., if the document does not exist or another issue occurs)
+      print('Error fetching account funds: $e');
+      return 0.0;
+    }
+  }
+
+
 
 
   Future<void> deleteBudget(String selectedAccount, String budgetId) async {
@@ -331,6 +399,20 @@ class FirebaseAuthService {
         .snapshots()
         .map((snapshot) => snapshot.docs);
   }
+  Stream<List<DocumentSnapshot>> getGoalFundsHistory(String selectedAccount) {
+    String userId = _auth.currentUser!.uid;
+
+    return _db
+        .collection('users')
+        .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccount)
+        .collection('goalFundsHistory')
+        .orderBy('timeStamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs);
+  }
+
   Stream<List<GoalData>> getUserGoalsChart(String? selectedAccount) {
     String userId = _auth.currentUser!.uid;
     return _db

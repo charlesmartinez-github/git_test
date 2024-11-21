@@ -154,9 +154,9 @@ class _ExpensesPageState extends State<ExpensesPage> {
                         onPressed: () => onTimeFrameSelected(0),
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
-                          backgroundColor: selectedIndex == 0 ? Colors.blue.shade100 : Colors.white,
+                          backgroundColor: selectedIndex == 0 ? kBlueColor : Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0),
+                            borderRadius: BorderRadius.circular(18.0),
                             side: BorderSide(color: selectedIndex == 0 ? Colors.white : Colors.grey.shade300),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -179,7 +179,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                         onPressed: () => onTimeFrameSelected(1),
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
-                          backgroundColor: selectedIndex == 1 ? Colors.blue.shade100 : Colors.white,
+                          backgroundColor: selectedIndex == 1 ? kBlueColor : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20.0),
                             side: BorderSide(color: selectedIndex == 1 ? Colors.white : Colors.grey.shade300),
@@ -204,7 +204,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                         onPressed: () => onTimeFrameSelected(2),
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
-                          backgroundColor: selectedIndex == 2 ? Colors.blue.shade100 : Colors.white,
+                          backgroundColor: selectedIndex == 2 ? kBlueColor : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20.0),
                             side: BorderSide(color: selectedIndex == 2 ? Colors.white : Colors.grey.shade300),
@@ -237,6 +237,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
   }
 
   ClipRRect expenseModal(double screenHeight, BuildContext context) {
+    String? selectedAccount = Provider.of<AccountProvider>(context, listen: false).selectedAccount;
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(40.0),
@@ -440,19 +441,46 @@ class _ExpensesPageState extends State<ExpensesPage> {
                           ),
                           backgroundColor: kBlueColor,
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           int expenseDate = selectedDate!.millisecondsSinceEpoch;
                           double amount = double.parse(_amountController.text.replaceAll(",", ""));
-                          if (_formKey.currentState!.validate()) {
-                            _firebaseServices.addExpense(
-                                context, amount, selectedValue, _expenseNameController.text, expenseDate);
-                            setState(() {
-                              selectedValue = null;
-                            });
-                            clearFormFields();
-                            Navigator.pop(context);
+
+                          // Check if the selected account has sufficient funds
+                          double accountFunds = await _firebaseServices.getAccountFunds(selectedAccount!);
+                          if (accountFunds >= amount) {
+                            // If funds are sufficient, add the expense
+                            if (_formKey.currentState!.validate()) {
+                              await _firebaseServices.addExpense(
+                                  context, amount, selectedValue, _expenseNameController.text, expenseDate);
+                              setState(() {
+                                selectedValue = null;
+                              });
+                              clearFormFields();
+                              Navigator.pop(context);
+                            }
+                          } else {
+                            // If funds are insufficient, close the modal and show an alert dialog
+                            Navigator.pop(context); // Close the modal first
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Insufficient Funds'),
+                                  content: const Text('You do not have sufficient funds in the selected account to add this expense.'),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop(); // Close the dialog
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
                           }
                         },
+
                         child: const Text(
                           'Create expense',
                           style: TextStyle(color: Colors.white),
@@ -474,7 +502,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      lastDate: DateTime.now(),
     );
 
     if (picked != null) {

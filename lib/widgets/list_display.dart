@@ -157,30 +157,31 @@ class _BudgetListWidgetState extends State<BudgetListWidget> {
                         ListTile(
                           isThreeLine: true,
                           leading: CircleAvatar(child: Text(description[0])),
-                          title: Row(
+                          title: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Text(description, overflow: TextOverflow.ellipsis),
-                              ),
+                              Text(description, overflow: TextOverflow.ellipsis),
                               if (isBudgetExpired)
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 8.0),
+                                  padding: EdgeInsets.only(top: 4.0),
                                   child: Text(
-                                    ' - Budget Expired',
+                                    'Budget Expired',
                                     style: TextStyle(
                                       color: Colors.red,
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 12,
                                     ),
                                   ),
                                 )
                               else if (isBudgetMaxed)
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 8.0),
+                                  padding: EdgeInsets.only(top: 4.0),
                                   child: Text(
-                                    ' - Budget Maxed',
+                                    'Budget Maxed',
                                     style: TextStyle(
                                       color: Colors.red,
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 12,
                                     ),
                                   ),
                                 ),
@@ -190,12 +191,94 @@ class _BudgetListWidgetState extends State<BudgetListWidget> {
                             'Spending: ₱${spentAmount.toStringAsFixed(2)}\nBudget: ₱${amount.toStringAsFixed(2)}',
                           ),
                           trailing: (isBudgetExpired || isBudgetMaxed)
-                              ? IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () async {
-                                    // Delete the budget entry if it is maxed out or expired
-                                    await widget.firebaseServices.deleteBudget(widget.selectedAccount!, budget['id']);
-                                  },
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.refresh, color: Colors.green),
+                                      onPressed: () async {
+                                        // Show a confirmation dialog before renewing
+                                        bool? confirmRenew = await showDialog<bool>(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: const Text('Renew budget?'),
+                                              content: const Text(
+                                                  'This will reset current spending and set new start and end date.'),
+                                              actions: <Widget>[
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop(false); // Cancel renew
+                                                  },
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop(true); // Confirm renew
+                                                  },
+                                                  child: const Text('Renew'),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+
+                                        // Proceed with renewal if confirmed
+                                        if (confirmRenew == true) {
+                                          // Calculate new start and end date
+                                          DateTime newStartDate = DateTime.now();
+                                          Duration duration = endDate.difference(startDate);
+                                          DateTime newEndDate = newStartDate.add(duration);
+
+                                          // Update the budget with the renewed values
+                                          await widget.firebaseServices.updateBudget(
+                                            widget.selectedAccount!,
+                                            budget['id'],
+                                            {
+                                              'spentAmount': 0.0,
+                                              'startDate': newStartDate.millisecondsSinceEpoch,
+                                              'endDate': newEndDate.millisecondsSinceEpoch,
+                                            },
+                                          );
+                                        }
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Color(0xFFf94252)),
+                                      onPressed: () async {
+                                        // Show a confirmation dialog before deleting
+                                        bool? confirmDelete = await showDialog<bool>(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: const Text('Delete budget?'),
+                                              content: const Text('This cannot be undone.'),
+                                              actions: <Widget>[
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop(false); // Cancel delete
+                                                  },
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop(true); // Confirm delete
+                                                  },
+                                                  child: const Text('Delete'),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+
+                                        // Proceed with deletion if confirmed
+                                        if (confirmDelete == true) {
+                                          await widget.firebaseServices
+                                              .deleteBudget(widget.selectedAccount!, budget['id']);
+                                        }
+                                      },
+                                    ),
+                                  ],
                                 )
                               : null,
                         ),
@@ -247,19 +330,20 @@ class _BudgetListWidgetState extends State<BudgetListWidget> {
   }
 }
 
-
-
 class GoalsListWidget extends StatefulWidget {
   final FirebaseAuthService firebaseServices;
   final String selectedAccount;
   final double screenHeight;
   final bool showLatestOnly;
+  final bool showButtons;
 
   const GoalsListWidget({
     super.key,
     required this.firebaseServices,
     required this.selectedAccount,
-    this.showLatestOnly = false, required this.screenHeight,
+    this.showLatestOnly = false,
+    required this.screenHeight,
+    this.showButtons = true,
   });
 
   @override
@@ -267,131 +351,214 @@ class GoalsListWidget extends StatefulWidget {
 }
 
 class _GoalsListWidgetState extends State<GoalsListWidget> {
+  bool showGoals = true;
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<DocumentSnapshot>>(
-      stream: widget.firebaseServices.getUserGoalsListView(widget.selectedAccount),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: LinearProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text("Error ${snapshot.error}"));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text("Create a goal"));
-        } else {
-          final allGoals = snapshot.data!;
-          final goals = widget.showLatestOnly ? allGoals.take(2).toList() : allGoals;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.showButtons)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        showGoals = true;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18.0),
+                          side: BorderSide(color: showGoals ? Colors.transparent : Colors.grey.shade300)),
+                      backgroundColor: showGoals ? kBlueColor : Colors.white,
+                    ),
+                    child: Text('Goals',
+                        style: TextStyle(
+                          color: showGoals ? Colors.white : Colors.black,
+                        )),
+                  ),
+                ),
+                const SizedBox(width: 10.0),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        showGoals = false;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18.0),
+                          side: BorderSide(color: !showGoals ? Colors.transparent : Colors.grey.shade300)),
+                      backgroundColor: !showGoals ? kBlueColor : Colors.white,
+                    ),
+                    child: Text(
+                      'History',
+                      style: TextStyle(
+                        color: !showGoals ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        Flexible(
+          child: StreamBuilder<List<DocumentSnapshot>>(
+            stream: showGoals
+                ? widget.firebaseServices.getUserGoalsListView(widget.selectedAccount)
+                : widget.firebaseServices.getGoalFundsHistory(widget.selectedAccount),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: LinearProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text("Error: ${snapshot.error}"));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text("No data available"));
+              } else {
+                final allItems = snapshot.data!;
+                final items = widget.showLatestOnly ? allItems.take(2).toList() : allItems;
 
-          return ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: goals.length,
-            itemBuilder: (context, index) {
-              final goal = goals[index];
-              final goalId = goal.id; // Document ID for the goal
-              final goalData = goal.data() as Map<String, dynamic>;
-              DateTime startDate = DateTime.fromMillisecondsSinceEpoch(goal['startDate']);
-              DateTime endDate = DateTime.fromMillisecondsSinceEpoch(goal['endDate']);
-              String textStartDate = DateFormat('MMMM d, y').format(startDate);
-              String textEndDate = DateFormat('MMMM d, y').format(endDate);
-              double savedAmount = goal['amountSaved'] ?? 0.0;
-              double targetAmount = goal['targetAmount'] ?? 1.0;
-              double progress = (savedAmount / targetAmount) * 100;
-              int colorValue = goalData['color'] ?? kBlueColor.value;
-              Color progressColor = Color(colorValue);
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    final itemData = item.data() as Map<String, dynamic>;
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Card(
-                  color: Colors.white,
-                  elevation: 4.0,
-                  shadowColor: progressColor,
-                  child: Column(
-                    children: <Widget>[
-                      ListTile(
-                        leading: SizedBox(
-                          width: 60,
-                          height: 60,
-                          child: SfRadialGauge(
-                            axes: <RadialAxis>[
-                              RadialAxis(
-                                minimum: 0,
-                                maximum: 100,
-                                startAngle: 270,
-                                endAngle: 270,
-                                showLabels: false,
-                                showTicks: false,
-                                axisLineStyle: AxisLineStyle(
-                                  thickness: 0.15,
-                                  color: Colors.grey[300]!,
-                                  thicknessUnit: GaugeSizeUnit.factor,
-                                ),
-                                pointers: <GaugePointer>[
-                                  RangePointer(
-                                    value: progress.clamp(0, 100),
-                                    width: 0.15,
-                                    sizeUnit: GaugeSizeUnit.factor,
-                                    color: progressColor,
-                                    enableAnimation: true,
-                                  )
-                                ],
-                                annotations: <GaugeAnnotation>[
-                                  GaugeAnnotation(
-                                    widget: Text(
-                                      "${progress.toStringAsFixed(0)}%",
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
+                    if (showGoals) {
+                      // Display goal information
+                      DateTime startDate = DateTime.fromMillisecondsSinceEpoch(item['startDate']);
+                      DateTime endDate = DateTime.fromMillisecondsSinceEpoch(item['endDate']);
+                      String textStartDate = DateFormat('MMMM d, y').format(startDate);
+                      String textEndDate = DateFormat('MMMM d, y').format(endDate);
+                      double savedAmount = item['amountSaved'] ?? 0.0;
+                      double targetAmount = item['targetAmount'] ?? 1.0;
+                      double progress = (savedAmount / targetAmount) * 100;
+                      int colorValue = itemData['color'] ?? kBlueColor.value;
+                      Color progressColor = Color(colorValue);
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Card(
+                          color: Colors.white,
+                          elevation: 4.0,
+                          shadowColor: progressColor,
+                          child: Column(
+                            children: <Widget>[
+                              ListTile(
+                                leading: SizedBox(
+                                  width: 60,
+                                  height: 60,
+                                  child: SfRadialGauge(
+                                    axes: <RadialAxis>[
+                                      RadialAxis(
+                                        minimum: 0,
+                                        maximum: 100,
+                                        startAngle: 270,
+                                        endAngle: 270,
+                                        showLabels: false,
+                                        showTicks: false,
+                                        axisLineStyle: AxisLineStyle(
+                                          thickness: 0.15,
+                                          color: Colors.grey[300]!,
+                                          thicknessUnit: GaugeSizeUnit.factor,
+                                        ),
+                                        pointers: <GaugePointer>[
+                                          RangePointer(
+                                            value: progress.clamp(0, 100),
+                                            width: 0.15,
+                                            sizeUnit: GaugeSizeUnit.factor,
+                                            color: progressColor,
+                                            enableAnimation: true,
+                                          )
+                                        ],
+                                        annotations: <GaugeAnnotation>[
+                                          GaugeAnnotation(
+                                            widget: Text(
+                                              "${progress.toStringAsFixed(0)}%",
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            angle: 90,
+                                            positionFactor: 0.1,
+                                          )
+                                        ],
                                       ),
-                                    ),
-                                    angle: 90,
-                                    positionFactor: 0.1,
-                                  )
-                                ],
+                                    ],
+                                  ),
+                                ),
+                                isThreeLine: true,
+                                title: Text(itemData['description'] ?? 'No description'),
+                                subtitle: Text(
+                                    'Saved: ₱${itemData['amountSaved']} \nTarget Amount: ₱${itemData['targetAmount']}'),
+                                trailing: IconButton(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return ClipRRect(
+                                          child: AddFundsModal(
+                                            screenHeight: widget.screenHeight,
+                                            goalId: item.id,
+                                            firebaseServices: widget.firebaseServices,
+                                            selectedAccount: widget.selectedAccount,
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  icon: const Icon(FontAwesomeIcons.plus),
+                                ),
+                              ),
+                              const Divider(),
+                              ListTile(
+                                dense: true,
+                                subtitle: Text('Start Date: $textStartDate \nEnd Date: $textEndDate'),
                               ),
                             ],
                           ),
                         ),
-                        isThreeLine: true,
-                        title: Text(goalData['description'] ?? 'No description'),
-                        subtitle: Text(
-                            'Saved: ₱${goalData['amountSaved']} \nTarget Amount: ₱${goalData['targetAmount']}'),
-                        trailing: IconButton(
-                          onPressed: () {
-                            showModalBottomSheet(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return ClipRRect(
-                                  child: AddFundsModal(
-                                    screenHeight: widget.screenHeight,
-                                    goalId: goalId,
-                                    firebaseServices: widget.firebaseServices,
-                                    selectedAccount: widget.selectedAccount,
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          icon: const Icon(FontAwesomeIcons.plus),
+                      );
+                    } else {
+                      // Display history information
+                      DateTime fundDate = DateTime.fromMillisecondsSinceEpoch(item['date']);
+                      String formattedDate = DateFormat('MMMM d, y').format(fundDate);
+                      double addedAmount = item['addedAmount'] ?? 0.0;
+                      String toGoalName = item['goalName'];
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Card(
+                          color: Colors.white,
+                          elevation: 4.0,
+                          shadowColor: kBlueColor,
+                          child: ListTile(
+                            isThreeLine: true,
+                            title: Text('$toGoalName'),
+                            subtitle: Text('Added Amount: ₱${addedAmount.toStringAsFixed(2)}\nDate: $formattedDate'),
+                          ),
                         ),
-                      ),
-                      const Divider(),
-                      ListTile(
-                        dense: true,
-                        subtitle: Text('Start Date: $textStartDate \nEnd Date: $textEndDate'),
-                      ),
-                    ],
-                  ),
-                ),
-              );
+                      );
+                    }
+                  },
+                );
+              }
             },
-          );
-        }
-      },
+          ),
+        ),
+      ],
     );
   }
 }
-
 
 class AddFundsModal extends StatelessWidget {
   final double screenHeight;
@@ -465,14 +632,11 @@ class AddFundsModal extends StatelessWidget {
                         color: kGrayColor,
                       ),
                       hintText: '00.00',
-                      hintStyle:
-                      const TextStyle(color: kGrayColor, fontWeight: FontWeight.w300, fontSize: 15.0),
+                      hintStyle: const TextStyle(color: kGrayColor, fontWeight: FontWeight.w300, fontSize: 15.0),
                       enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: kGrayColor)),
+                          borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: kGrayColor)),
                       focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: kGrayColor)),
+                          borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: kGrayColor)),
                       border: const OutlineInputBorder(),
                       contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                     ),
@@ -489,11 +653,38 @@ class AddFundsModal extends StatelessWidget {
                       ),
                       backgroundColor: kBlueColor,
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       double amount = double.parse(_addFundsController.text.replaceAll(",", ""));
-                      firebaseServices.addGoalFunds(selectedAccount, goalId, amount);
                       _addFundsController.clear();
-                      Navigator.pop(context);
+
+                      // Check if the selected account has sufficient funds
+                      double accountFunds = await firebaseServices.getAccountFunds(selectedAccount);
+                      if (accountFunds >= amount) {
+                        // If funds are sufficient, add funds to the budget
+                        await firebaseServices.addGoalFunds(selectedAccount, goalId, amount);
+                        Navigator.pop(context); // Close the modal
+                      } else {
+                        // If funds are insufficient, close the modal and show an alert dialog
+                        Navigator.pop(context); // Close the modal first
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Insufficient Funds!'),
+                              content: const Text(
+                                  'You do not have sufficient funds in the selected account to add this amount.'),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop(); // Close the dialog
+                                  },
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
                     },
                     child: const Text(
                       'Add funds',
@@ -509,4 +700,3 @@ class AddFundsModal extends StatelessWidget {
     );
   }
 }
-

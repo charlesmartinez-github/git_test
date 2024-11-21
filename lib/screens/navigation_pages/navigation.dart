@@ -61,7 +61,7 @@ class _NavigationState extends State<Navigation> {
           backgroundColor: Colors.white,
           body: body.elementAt(pageProvider.currentPageIndex),
           bottomNavigationBar: Container(
-            height: screenHeight * 0.12,
+            height: screenHeight * 0.10, // Reduced height for better fitting
             width: screenWidth,
             clipBehavior: Clip.hardEdge,
             decoration: const BoxDecoration(
@@ -75,18 +75,18 @@ class _NavigationState extends State<Navigation> {
                 labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
                       (Set<WidgetState> states) {
                     if (states.contains(WidgetState.selected)) {
-                      return const TextStyle(color: Color(0xFFe1e3e6), fontSize: 14);
+                      return TextStyle(color: const Color(0xFFe1e3e6), fontSize: screenWidth * 0.03); // Responsive text size
                     } else {
-                      return const TextStyle(color: Colors.grey, fontSize: 14);
+                      return TextStyle(color: Colors.grey, fontSize: screenWidth * 0.03); // Responsive text size
                     }
                   },
                 ),
                 iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
                       (Set<WidgetState> states) {
                     if (states.contains(WidgetState.selected)) {
-                      return const IconThemeData(color: Color(0xFFe1e3e6), size: 30);
+                      return IconThemeData(color: const Color(0xFFe1e3e6), size: screenWidth * 0.08); // Responsive icon size
                     } else {
-                      return const IconThemeData(color: Colors.grey, size: 24);
+                      return IconThemeData(color: Colors.grey, size: screenWidth * 0.06); // Responsive icon size
                     }
                   },
                 ),
@@ -94,7 +94,7 @@ class _NavigationState extends State<Navigation> {
               child: NavigationBar(
                 backgroundColor: kBlueColor,
                 indicatorColor: kBlueColor,
-                overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+                overlayColor: WidgetStateProperty.all(Colors.transparent),
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                 selectedIndex: pageProvider.currentPageIndex,
                 onDestinationSelected: (int index) {
@@ -102,18 +102,30 @@ class _NavigationState extends State<Navigation> {
                 },
                 destinations: const <Widget>[
                   NavigationDestination(
-                      icon: Icon(FontAwesomeIcons.squarePollVertical, color: kIconColor), label: 'Dashboard'),
+                    icon: Icon(FontAwesomeIcons.squarePollVertical, color: kIconColor),
+                    label: 'Dashboard',
+                  ),
                   NavigationDestination(
                     icon: Icon(FontAwesomeIcons.moneyBill1, color: kIconColor),
                     label: 'Budget',
                   ),
-                  NavigationDestination(icon: Icon(FontAwesomeIcons.piggyBank, color: kIconColor), label: 'Goals'),
-                  NavigationDestination(icon: Icon(FontAwesomeIcons.pesoSign, color: kIconColor), label: 'Expenses'),
-                  NavigationDestination(icon: Icon(FontAwesomeIcons.graduationCap, color: kIconColor), label: 'Articles'),
+                  NavigationDestination(
+                    icon: Icon(FontAwesomeIcons.piggyBank, color: kIconColor),
+                    label: 'Goals',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(FontAwesomeIcons.pesoSign, color: kIconColor),
+                    label: 'Expenses',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(FontAwesomeIcons.graduationCap, color: kIconColor),
+                    label: 'Articles',
+                  ),
                 ],
               ),
             ),
           ),
+
           appBar: AppBar(
             forceMaterialTransparency: true,
             title: Text(formatter),

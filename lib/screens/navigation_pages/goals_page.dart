@@ -93,6 +93,7 @@ class _GoalsPageState extends State<GoalsPage> {
                 firebaseServices: _firebaseServices,
                 selectedAccount: selectedAccount!,
                 screenHeight: MediaQuery.of(context).size.height,
+                showButtons: true,
               ),
             ],
           ),

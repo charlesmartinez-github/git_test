@@ -96,7 +96,10 @@ class _BudgetPageState extends State<BudgetPage> {
                 'Summary',
                 style: TextStyle(fontSize: 16.0),
               ),
-              BudgetChart(firebaseServices: _firebaseServices, selectedAccount: context.watch<AccountProvider>().selectedAccount,),
+              BudgetChart(
+                firebaseServices: _firebaseServices,
+                selectedAccount: context.watch<AccountProvider>().selectedAccount,
+              ),
               const SizedBox(height: 10.0),
               BudgetListWidget(firebaseServices: _firebaseServices, selectedAccount: selectedAccount),
             ],
@@ -182,18 +185,6 @@ class _BudgetPageState extends State<BudgetPage> {
                         ),
                       ),
                     ),
-                    // ListView.builder(
-                    //     shrinkWrap: true,
-                    //     itemCount: predefineCategories.length,
-                    //     itemBuilder: (context, index) {
-                    //       final category = predefineCategories[index];
-                    //       return Expanded(
-                    //         child: ElevatedButton(
-                    //             onPressed: (){},
-                    //             child: Text(category)
-                    //         ),
-                    //       );
-                    //     }),
                     const SizedBox(height: 6.0),
                     const Text(
                       'Start date',
@@ -228,7 +219,7 @@ class _BudgetPageState extends State<BudgetPage> {
                           contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                         ),
                         onTap: () async {
-                          selectedStartDate = await _selectDate(_startDateController);
+                          selectedStartDate = await _selectDate(_startDateController, DateType.start);
                         },
                       ),
                     ),
@@ -266,7 +257,7 @@ class _BudgetPageState extends State<BudgetPage> {
                           contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                         ),
                         onTap: () async {
-                          selectedEndDate = await _selectDate(_endDateController);
+                          selectedEndDate = await _selectDate(_endDateController, DateType.end);
                         },
                       ),
                     ),
@@ -305,26 +296,6 @@ class _BudgetPageState extends State<BudgetPage> {
                         ),
                       ),
                     ),
-                    // const SizedBox(height: 3.0),
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    //   children: <Widget>[
-                    //     Text(
-                    //         'Repeating',
-                    //         style: TextStyle(color: kGrayColor, fontSize: 15.0)
-                    //     ),
-                    //     Switch(
-                    //         activeColor: kBlueColor,
-                    //         value: repeating,
-                    //         onChanged: (bool newValue) {
-                    //           setState(() {
-                    //             repeating = newValue;
-                    //           });
-                    //         },
-                    //       thumbColor: WidgetStatePropertyAll(kGrayColor),
-                    //     )
-                    //   ],
-                    // ),
                     const SizedBox(height: 13.0),
                     SizedBox(
                       width: double.infinity,
@@ -365,25 +336,38 @@ class _BudgetPageState extends State<BudgetPage> {
     );
   }
 
-  Future<DateTime?> _selectDate(TextEditingController dateController) async {
+  Future<DateTime?> _selectDate(
+      TextEditingController dateController, DateType dateType) async {
+    DateTime initialDate = DateTime.now();
+    DateTime firstDate = dateType == DateType.start
+        ? DateTime(2000)
+        : DateTime.now().add(const Duration(days: 1));
+    DateTime lastDate = dateType == DateType.start
+        ? DateTime.now()
+        : DateTime(2100);
+
+    // Ensure initialDate is not before firstDate to avoid assertion error
+    if (dateType == DateType.end) {
+      initialDate = firstDate;
+    }
+
     DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
     );
 
     if (picked != null) {
-      dateController.text = DateFormat('MMMM d').format(picked);
+      dateController.text = DateFormat('MMMM d, y').format(picked);
       return picked;
     }
     return null;
   }
+
 }
 
-
-
-
+enum DateType { start, end }
 
 class ChartData {
   final String description;

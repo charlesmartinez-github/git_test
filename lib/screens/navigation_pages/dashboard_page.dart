@@ -114,282 +114,288 @@ class _DashboardPageState extends State<DashboardPage> {
       backgroundColor: Colors.white,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          return SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                vertical: constraints.maxHeight * 0.02,
-                horizontal: constraints.maxWidth * 0.05,
-              ),
-              child: Column(
-                children: <Widget>[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Flexible(child: Text('Account:')),
-                      Expanded(
-                        flex: 2,
-                        child: StreamBuilder<List<Map<String, String>>>(
-                          stream: streamAccounts(),
+          return ConstrainedBox(
+            constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  vertical: constraints.maxHeight * 0.02,
+                  horizontal: constraints.maxWidth * 0.05,
+                ),
+                child: Column(
+                  children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Flexible(child: Text('Account:')),
+                        Expanded(
+                          flex: 2,
+                          child: StreamBuilder<List<Map<String, String>>>(
+                            stream: streamAccounts(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const CircularProgressIndicator();
+                              }
+
+                              if (snapshot.hasError) {
+                                return const Text('Error occurred');
+                              }
+
+                              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                return const Text('No accounts found');
+                              }
+
+                              // Ensure that there's always a valid account selected before rendering the dropdown
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (context.read<AccountProvider>().selectedAccount == null &&
+                                    snapshot.data!.isNotEmpty) {
+                                  context
+                                      .read<AccountProvider>()
+                                      .setSelectedAccount(snapshot.data!.first['accountId']!);
+                                }
+                              });
+
+                              // Get the current selected account value
+                              String? selectedAccount = context.watch<AccountProvider>().selectedAccount;
+
+                              // If no account is selected yet, return an empty container temporarily
+                              if (selectedAccount == null) {
+                                return const SizedBox
+                                    .shrink(); // Returning an empty widget until `selectedAccount` is updated
+                              }
+
+                              // Create dropdown items from the account data
+                              List<DropdownMenuItem<String>> dropdownItems = snapshot.data!.map((account) {
+                                return DropdownMenuItem<String>(
+                                  value: account['accountId'],
+                                  child: Text(account['accountName']!),
+                                );
+                              }).toList();
+
+                              return DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: selectedAccount,
+                                  hint: const Text('Select an Account'),
+                                  items: dropdownItems,
+                                  onChanged: (String? newValue) {
+                                    context.read<AccountProvider>().setSelectedAccount(newValue!);
+                                  },
+                                  isExpanded: true,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => _showAddAccountBottomSheet(context, constraints.maxHeight),
+                          child: const Text('add account'),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        const Text('Funds'),
+                        StreamBuilder<double>(
+                          stream: selectedAccount != null ? _firebaseServices.streamFunds(selectedAccount) : null,
                           builder: (context, snapshot) {
                             if (snapshot.connectionState == ConnectionState.waiting) {
                               return const CircularProgressIndicator();
                             }
-
                             if (snapshot.hasError) {
-                              return const Text('Error occurred');
+                              return Text('Error: ${snapshot.error}');
                             }
-
-                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return const Text('No accounts found');
+                            if (!snapshot.hasData) {
+                              return const Text('No funds data available');
                             }
-
-                            // Ensure that there's always a valid account selected before rendering the dropdown
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (context.read<AccountProvider>().selectedAccount == null &&
-                                  snapshot.data!.isNotEmpty) {
-                                context.read<AccountProvider>().setSelectedAccount(snapshot.data!.first['accountId']!);
-                              }
-                            });
-
-                            // Get the current selected account value
-                            String? selectedAccount = context.watch<AccountProvider>().selectedAccount;
-
-                            // If no account is selected yet, return an empty container temporarily
-                            if (selectedAccount == null) {
-                              return const SizedBox
-                                  .shrink(); // Returning an empty widget until `selectedAccount` is updated
-                            }
-
-                            // Create dropdown items from the account data
-                            List<DropdownMenuItem<String>> dropdownItems = snapshot.data!.map((account) {
-                              return DropdownMenuItem<String>(
-                                value: account['accountId'],
-                                child: Text(account['accountName']!),
-                              );
-                            }).toList();
-
-                            return DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: selectedAccount,
-                                hint: const Text('Select an Account'),
-                                items: dropdownItems,
-                                onChanged: (String? newValue) {
-                                  context.read<AccountProvider>().setSelectedAccount(newValue!);
-                                },
-                                isExpanded: true,
-                              ),
-                            );
+                            double funds = snapshot.data ?? 0.0;
+                            return Text('₱${funds.toStringAsFixed(2)}');
                           },
                         ),
-                      ),
-                      TextButton(
-                        onPressed: () => _showAddAccountBottomSheet(context, constraints.maxHeight),
-                        child: const Text('add account'),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      const Text('Funds'),
-                      StreamBuilder<double>(
-                        stream: selectedAccount != null ? _firebaseServices.streamFunds(selectedAccount) : null,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const CircularProgressIndicator();
-                          }
-                          if (snapshot.hasError) {
-                            return Text('Error: ${snapshot.error}');
-                          }
-                          if (!snapshot.hasData) {
-                            return const Text('No funds data available');
-                          }
-                          double funds = snapshot.data ?? 0.0;
-                          return Text('₱${funds.toStringAsFixed(2)}');
-                        },
-                      ),
-                      TextButton(
-                        onPressed: () => _showAddFundsBottomSheet(context, constraints.maxHeight),
-                        child: const Text('add funds'),
-                      ),
-                    ],
-                  ),
-                  Card(
-                    elevation: 3,
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      side: const BorderSide(
-                        color: Colors.blue,
-                        width: 1.0,
-                      ),
+                        TextButton(
+                          onPressed: () => _showAddFundsBottomSheet(context, constraints.maxHeight),
+                          child: const Text('add funds'),
+                        ),
+                      ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: <Widget>[
-                              const Text(
-                                'Expenses',
-                                style: TextStyle(fontSize: 18.0),
-                              ),
-                              TextButton(
+                    Card(
+                      elevation: 3,
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        side: const BorderSide(
+                          color: Colors.blue,
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                const Text(
+                                  'Expenses',
+                                  style: TextStyle(fontSize: 18.0),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    // showModalBottomSheet<dynamic>(
+                                    //   isScrollControlled: true,
+                                    //   context: context,
+                                    //   builder: (BuildContext context) {
+                                    //     return _buildBottomSheet(context, constraints.maxHeight);
+                                    //   },
+                                    // );
+                                  },
+                                  child: const Text('+ add new'),
+                                )
+                              ],
+                            ),
+                            selectedAccount != null && selectedAccount.isNotEmpty
+                                ? ExpenseChart(
+                                    stream: _firebaseServices.expenseData(selectedAccount),
+                                    selectedTimeframe: selectedTimeframe,
+                                  )
+                                : const Center(
+                                    child: Text('Please select an account to view expenses'),
+                                  ),
+                            const SizedBox(height: 10.0),
+                            selectedAccount != null && selectedAccount.isNotEmpty
+                                ? ExpenseListWidget(
+                                    firebaseServices: _firebaseServices,
+                                    selectedAccount: selectedAccount,
+                                    showLatestOnly: true,
+                                  )
+                                : const Center(
+                                    child: Text('Please select an account to view expenses'),
+                                  ),
+                            Center(
+                              child: TextButton(
                                 onPressed: () {
-                                  // showModalBottomSheet<dynamic>(
-                                  //   isScrollControlled: true,
-                                  //   context: context,
-                                  //   builder: (BuildContext context) {
-                                  //     return _buildBottomSheet(context, constraints.maxHeight);
-                                  //   },
-                                  // );
+                                  context.read<PageProvider>().setCurrentPageIndex(3);
                                 },
-                                child: const Text('+ add new'),
-                              )
-                            ],
-                          ),
-                          selectedAccount != null && selectedAccount.isNotEmpty
-                              ? ExpenseChart(
-                                  stream: _firebaseServices.expenseData(selectedAccount),
-                                  selectedTimeframe: selectedTimeframe,
-                                )
-                              : const Center(
-                                  child: Text('Please select an account to view expenses'),
-                                ),
-                          const SizedBox(height: 10.0),
-                          selectedAccount != null && selectedAccount.isNotEmpty
-                              ? ExpenseListWidget(
-                                  firebaseServices: _firebaseServices,
-                                  selectedAccount: selectedAccount,
-                                  showLatestOnly: true,
-                                )
-                              : const Center(
-                                  child: Text('Please select an account to view expenses'),
-                                ),
-                          Center(
-                            child: TextButton(
-                              onPressed: () {
-                                context.read<PageProvider>().setCurrentPageIndex(3);
-                              },
-                              child: const Text('View All'),
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: constraints.maxHeight * 0.03),
-                  Card(
-                    elevation: 3,
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      side: const BorderSide(
-                        color: Colors.blue,
-                        width: 1.0,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: <Widget>[
-                              const Text(
-                                'Budget',
-                                style: TextStyle(fontSize: 18.0),
+                                child: const Text('View All'),
                               ),
-                              TextButton(
-                                onPressed: () => _showAddBudgetBottomSheet(context, constraints.maxHeight),
-                                child: const Text('+ add new'),
-                              )
-                            ],
-                          ),
-                          selectedAccount != null && selectedAccount.isNotEmpty
-                              ? BudgetChart(firebaseServices: _firebaseServices, selectedAccount: selectedAccount)
-                              : const Center(
-                                  child: Text('Please select an account to view budgets'),
-                                ),
-                          const SizedBox(height: 10.0),
-                          selectedAccount != null && selectedAccount.isNotEmpty
-                              ? BudgetListWidget(
-                                  firebaseServices: _firebaseServices,
-                                  selectedAccount: selectedAccount,
-                                  showLatestOnly: true)
-                              : const Center(
-                                  child: Text('Please select an account to view budgets'),
-                                ),
-                          Center(
-                            child: TextButton(
-                              onPressed: () {
-                                context.read<PageProvider>().setCurrentPageIndex(1);
-                              },
-                              child: const Text('View All'),
-                            ),
-                          )
-                        ],
+                            )
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: constraints.maxHeight * 0.03),
-                  Card(
-                    elevation: 3,
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      side: const BorderSide(
-                        color: Colors.blue,
-                        width: 1.0,
+                    SizedBox(height: constraints.maxHeight * 0.03),
+                    Card(
+                      elevation: 3,
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        side: const BorderSide(
+                          color: Colors.blue,
+                          width: 1.0,
+                        ),
                       ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: <Widget>[
-                              const Text(
-                                'Goals',
-                                style: TextStyle(fontSize: 18.0),
-                              ),
-                              TextButton(
-                                onPressed: () {},
-                                child: const Text('+ add new'),
-                              )
-                            ],
-                          ),
-                          selectedAccount != null && selectedAccount.isNotEmpty
-                              ? GoalChart(firebaseServices: _firebaseServices, selectedAccount: selectedAccount)
-                              : const Center(
-                                  child: Text('Please select an account to view goals'),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                const Text(
+                                  'Budget',
+                                  style: TextStyle(fontSize: 18.0),
                                 ),
-                          const SizedBox(height: 10.0),
-                          selectedAccount != null && selectedAccount.isNotEmpty
-                              ? GoalsListWidget(
-                                  firebaseServices: _firebaseServices,
-                                  selectedAccount: selectedAccount,
-                                  showLatestOnly: true,
-                                  screenHeight: screenHeight,
+                                TextButton(
+                                  onPressed: () => _showAddBudgetBottomSheet(context, constraints.maxHeight),
+                                  child: const Text('+ add new'),
                                 )
-                              : const Center(
-                                  child: Text('Please select an account to view goals'),
-                                ),
-                          Center(
-                            child: TextButton(
-                              onPressed: () {
-                                context.read<PageProvider>().setCurrentPageIndex(2);
-                              },
-                              child: const Text('View All'),
+                              ],
                             ),
-                          )
-                        ],
+                            selectedAccount != null && selectedAccount.isNotEmpty
+                                ? BudgetChart(firebaseServices: _firebaseServices, selectedAccount: selectedAccount)
+                                : const Center(
+                                    child: Text('Please select an account to view budgets'),
+                                  ),
+                            const SizedBox(height: 10.0),
+                            selectedAccount != null && selectedAccount.isNotEmpty
+                                ? BudgetListWidget(
+                                    firebaseServices: _firebaseServices,
+                                    selectedAccount: selectedAccount,
+                                    showLatestOnly: true)
+                                : const Center(
+                                    child: Text('Please select an account to view budgets'),
+                                  ),
+                            Center(
+                              child: TextButton(
+                                onPressed: () {
+                                  context.read<PageProvider>().setCurrentPageIndex(1);
+                                },
+                                child: const Text('View All'),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ),
-                  )
-                ],
+                    SizedBox(height: constraints.maxHeight * 0.03),
+                    Card(
+                      elevation: 3,
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        side: const BorderSide(
+                          color: Colors.blue,
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                const Text(
+                                  'Goals',
+                                  style: TextStyle(fontSize: 18.0),
+                                ),
+                                TextButton(
+                                  onPressed: () {},
+                                  child: const Text('+ add new'),
+                                )
+                              ],
+                            ),
+                            selectedAccount != null && selectedAccount.isNotEmpty
+                                ? GoalChart(firebaseServices: _firebaseServices, selectedAccount: selectedAccount)
+                                : const Center(
+                                    child: Text('Please select an account to view goals'),
+                                  ),
+                            const SizedBox(height: 10.0),
+                            selectedAccount != null && selectedAccount.isNotEmpty
+                                ? GoalsListWidget(
+                                    firebaseServices: _firebaseServices,
+                                    selectedAccount: selectedAccount,
+                                    showLatestOnly: true,
+                                    screenHeight: screenHeight,
+                                    showButtons: false,
+                                  )
+                                : const Center(
+                                    child: Text('Please select an account to view goals'),
+                                  ),
+                            Center(
+                              child: TextButton(
+                                onPressed: () {
+                                  context.read<PageProvider>().setCurrentPageIndex(2);
+                                },
+                                child: const Text('View All'),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
           );
