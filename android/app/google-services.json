@@ -12,7 +12,20 @@
           "package_name": "com.example.finedger"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "217026675332-7tniu619jtolriujd3l8vm5hmdtpn3h0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.finedger",
+            "certificate_hash": "cfc01be3149f887cba9bceca4490bb24415efb67"
+          }
+        },
+        {
+          "client_id": "217026675332-g7pmgtj8cqaqlar9mclubortvk395nnt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCHGCTEKylw4daavrNDtAgc-4A5TTUab_I"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "217026675332-g7pmgtj8cqaqlar9mclubortvk395nnt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

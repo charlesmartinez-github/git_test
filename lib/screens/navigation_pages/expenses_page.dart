@@ -58,15 +58,23 @@ class _ExpensesPageState extends State<ExpensesPage> {
         .collection('budgets')
         .get();
 
-    // Extract descriptions and add them to the list, excluding budgets where spentAmount equals amount
-    // and where endDate is equal to or has passed the current date
+    // Extract descriptions and add them to the list, excluding budgets that are expired or maxed out
     DateTime now = DateTime.now();
     budgetDescriptions = snapshot.docs
-        .where((doc) => doc['spentAmount'] != doc['amount'] &&
-        (doc['endDate'] == null || (doc['endDate'] as num) > now.millisecondsSinceEpoch))
+        .where((doc) {
+      final spentAmount = doc['spentAmount'] as num;
+      final amount = doc['amount'] as num;
+      final endDate = doc['endDate'] as num?;
+
+      final isNotMaxedOut = spentAmount < amount;
+      final isNotExpired = endDate == null || endDate > now.millisecondsSinceEpoch;
+
+      return isNotMaxedOut && isNotExpired;
+    })
         .map((doc) => doc['description'] as String)
         .toList();
   }
+
 
 
   void onTimeFrameSelected(int index) {
@@ -132,7 +140,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                             isScrollControlled: true,
                             context: context,
                             builder: (BuildContext context) {
-                              return FocusScope(child: expenseModal(screenHeight, context));
+                              return FocusScope(child: addExpenseModal(screenHeight, context));
                             },
                           );
                         },
@@ -236,7 +244,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
     );
   }
 
-  ClipRRect expenseModal(double screenHeight, BuildContext context) {
+  ClipRRect addExpenseModal(double screenHeight, BuildContext context) {
     String? selectedAccount = Provider.of<AccountProvider>(context, listen: false).selectedAccount;
     return ClipRRect(
       borderRadius: const BorderRadius.only(
@@ -359,7 +367,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                     ),
                     const SizedBox(height: 6.0),
                     const Text(
-                      'Expenses date',
+                      'Expense date',
                       style: TextStyle(color: kGrayColor, fontSize: 15.0),
                     ),
                     const SizedBox(height: 3.0),
@@ -391,7 +399,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                           contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                         ),
                         onTap: () async {
-                          selectedDate = await _selectDate();
+                          selectedDate = await _selectDateExpense();
                         },
                       ),
                     ),
@@ -442,44 +450,71 @@ class _ExpensesPageState extends State<ExpensesPage> {
                           backgroundColor: kBlueColor,
                         ),
                         onPressed: () async {
-                          int expenseDate = selectedDate!.millisecondsSinceEpoch;
-                          double amount = double.parse(_amountController.text.replaceAll(",", ""));
-
-                          // Check if the selected account has sufficient funds
-                          double accountFunds = await _firebaseServices.getAccountFunds(selectedAccount!);
-                          if (accountFunds >= amount) {
-                            // If funds are sufficient, add the expense
-                            if (_formKey.currentState!.validate()) {
-                              await _firebaseServices.addExpense(
-                                  context, amount, selectedValue, _expenseNameController.text, expenseDate);
-                              setState(() {
-                                selectedValue = null;
-                              });
-                              clearFormFields();
-                              Navigator.pop(context);
+                          // Ensure that both fields are valid
+                          if (_formKey.currentState!.validate()) {
+                            if (selectedDate == null) {
+                              // Show an error if the date is not selected
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Please select a date for the expense.")),
+                              );
+                              return;
                             }
-                          } else {
-                            // If funds are insufficient, close the modal and show an alert dialog
-                            Navigator.pop(context); // Close the modal first
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: const Text('Insufficient Funds'),
-                                  content: const Text('You do not have sufficient funds in the selected account to add this expense.'),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop(); // Close the dialog
-                                      },
-                                      child: const Text('OK'),
-                                    ),
-                                  ],
+
+                            String amountText = _amountController.text.replaceAll(",", "");
+                            double? amount;
+
+                            // Try to parse the amount; show error if parsing fails
+                            try {
+                              amount = double.parse(amountText);
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Please enter a valid amount.")),
+                              );
+                              return;
+                            }
+
+                            // Proceed only if we have valid values
+                            if (amount != null) {
+                              // Check if the selected account has sufficient funds
+                              double accountFunds = await _firebaseServices.getAccountFunds(selectedAccount!);
+                              if (accountFunds >= amount) {
+                                // If funds are sufficient, add the expense
+                                int expenseDate = selectedDate!.millisecondsSinceEpoch;
+
+                                await _firebaseServices.addExpense(
+                                    context, amount, selectedValue, _expenseNameController.text, expenseDate);
+
+                                setState(() {
+                                  selectedValue = null;
+                                });
+
+                                clearFormFields();
+                                Navigator.pop(context);
+                              } else {
+                                // If funds are insufficient, close the modal and show an alert dialog
+                                Navigator.pop(context); // Close the modal first
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text('Insufficient Funds'),
+                                      content: const Text('You do not have sufficient funds in the selected account to add this expense.'),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop(); // Close the dialog
+                                          },
+                                          child: const Text('OK'),
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 );
-                              },
-                            );
+                              }
+                            }
                           }
                         },
+
 
                         child: const Text(
                           'Create expense',
@@ -497,7 +532,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
     );
   }
 
-  Future<DateTime?> _selectDate() async {
+  Future<DateTime?> _selectDateExpense() async {
     DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),

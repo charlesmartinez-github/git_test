@@ -1,6 +1,7 @@
 import 'package:finedger/providers/account_provider.dart';
 import 'package:finedger/screens/navigation_pages/navigation.dart';
 import 'package:finedger/services/firebase_auth_services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:finedger/widgets/for_gettingstarted.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -123,61 +124,50 @@ class _LoginPageState extends State<LoginPage> {
                         backgroundColor: kGreenColor),
                     SizedBox(height: screenHeight * 0.005),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
-                        Expanded(
-                          child: CheckboxListTile(
-                            checkColor: Colors.white,
-                            activeColor: const Color(0xff30437a),
-                            title: const Text(
+                        Row(
+                          children: [
+                            Checkbox(
+
+                              checkColor: Colors.white,
+                              activeColor: const Color(0xff30437a),
+                              value: isChecked,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  isChecked = value!;
+                                });
+                              },
+                            ),
+                            const Text(
                               'Remember me',
                               style: TextStyle(fontSize: 11.0),
                             ),
-                            controlAffinity: ListTileControlAffinity.leading,
-                            value: isChecked,
-                            onChanged: (bool? value) {
-                              setState(
-                                () {
-                                  isChecked = value!;
-                                },
-                              );
-                            },
-                          ),
+                          ],
                         ),
                         TextButton(
                           onPressed: () {},
                           child: const Text(
                             'Forgot Password?',
                             style: TextStyle(
-                                color: Color(0xff30437a), fontSize: 11.0),
+                              color: Color(0xff30437a),
+                              fontSize: 11.0,
+                            ),
                           ),
                         ),
                       ],
                     ),
+
                     Container(
                       padding:
                           EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
-                      child: const FederatedIdentitySignInButton(
-                        icon: Icon(FontAwesomeIcons.google),
+                      child: FederatedIdentitySignInButton(
+                        icon: const Icon(FontAwesomeIcons.google),
                         label: 'Continue with Google',
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.005),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
-                      child: const FederatedIdentitySignInButton(
-                        icon: Icon(FontAwesomeIcons.apple),
-                        label: 'Continue with Apple',
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.005),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
-                      child: const FederatedIdentitySignInButton(
-                        icon: Icon(FontAwesomeIcons.facebook),
-                        label: 'Continue with Facebook',
+                        onPressed: ()  {
+                          _signInWithGoogle(context);
+                        },
+
                       ),
                     ),
                   ],
@@ -195,6 +185,34 @@ class _LoginPageState extends State<LoginPage> {
       _emailController.text.trim(),
       _passwordController.text.trim(),
     );
+    if (user != null) {
+      // Check if the widget is still mounted
+
+      if (context.mounted) {
+        context.read<AccountProvider>().setSelectedAccount(null);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) {
+              return const Navigation(passedPageIndex: 0);
+            },
+          ),
+        );
+      }
+    }
+  }
+
+  _signInWithGoogle(BuildContext context) async {
+    User? user = await _auth.signInWithGoogle();
+    if (user != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Signed in as ${user.displayName}')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sign-in failed')),
+      );
+    }
     if (user != null) {
       // Check if the widget is still mounted
 

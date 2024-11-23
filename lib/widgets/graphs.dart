@@ -410,7 +410,7 @@ class _GoalChartState extends State<GoalChart> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      '₱${snapshot.data!.fold(0.0, (sum, goal) => sum + goal.savedAmount).toStringAsFixed(2)}',
+                      '₱${NumberFormat("#,##0.00", "en_US").format(snapshot.data!.fold(0.0, (sum, goal) => sum + goal.savedAmount))}',
                       style: const TextStyle(fontSize: 14),
                     ),
                   ],

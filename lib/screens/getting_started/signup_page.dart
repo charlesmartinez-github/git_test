@@ -1,4 +1,3 @@
-
 import 'package:finedger/screens/getting_started/email_verification.dart';
 import 'package:finedger/screens/getting_started/login_page.dart';
 import 'package:finedger/services/firebase_auth_services.dart';
@@ -6,6 +5,7 @@ import 'package:finedger/services/firebase_auth_services.dart';
 import 'package:finedger/widgets/for_gettingstarted.dart';
 import 'package:flutter/material.dart';
 import 'package:finedger/constants/constants.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -20,12 +20,10 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneNumber = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   String? validateEmail(String? email) {
-    RegExp emailRegex = RegExp(
-        r"^[a-zA-Z0-9.a-zA-Z0-9!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+    RegExp emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
     final isEmailValid = emailRegex.hasMatch(email ?? '');
     if (!isEmailValid) {
       return 'Please enter a valid email';
@@ -34,8 +32,8 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   String? validatePhoneNumber(String? phoneNumber) {
-    RegExp phoneNumberRegex = RegExp(
-        r'^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$');
+    RegExp phoneNumberRegex =
+        RegExp(r'^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$');
     final isPhoneNumberValid = phoneNumberRegex.hasMatch(phoneNumber ?? '');
     if (phoneNumber!.isEmpty) {
       return 'Please enter a phone number';
@@ -60,7 +58,6 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
-
     final screenHeight = MediaQuery.sizeOf(context).height;
     final screenWidth = MediaQuery.sizeOf(context).width;
 
@@ -173,6 +170,7 @@ class _SignupPageState extends State<SignupPage> {
                     keyboardType: TextInputType.text,
                     obscureText: true,
                     labelText: 'Password',
+                    showSuffixIcon: true,
                   ),
                   SizedBox(
                     height: screenHeight * 0.010,
@@ -191,13 +189,13 @@ class _SignupPageState extends State<SignupPage> {
                     keyboardType: TextInputType.text,
                     obscureText: true,
                     labelText: 'Confirm password',
+                    showSuffixIcon: true,
                   ),
                   SizedBox(
                     height: screenHeight * 0.020,
                   ),
                   Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
+                    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
                     child: LargeButton(
                       onPress: () async {
                         if (_formKey.currentState!.validate()) {

@@ -8,9 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:syncfusion_flutter_charts/charts.dart' as charts;
-import 'package:syncfusion_flutter_gauges/gauges.dart' as gauges;
-import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class BudgetPage extends StatefulWidget {
   const BudgetPage({super.key, this.onAddItems});
@@ -31,8 +28,8 @@ class _BudgetPageState extends State<BudgetPage> {
   final _endDateController = TextEditingController();
   final _amountController = TextEditingController();
   bool repeating = false;
-  DateTime? selectedStartDate;
-  DateTime? selectedEndDate;
+  DateTime? selectedStartDateBudget;
+  DateTime? selectedEndDateBudget;
   List<String> predefineCategories = [
     'Food',
     'Electric',
@@ -84,7 +81,8 @@ class _BudgetPageState extends State<BudgetPage> {
                         isScrollControlled: true,
                         context: context,
                         builder: (BuildContext context) {
-                          return budgetModal(screenHeight, context);
+                          String? selectedAccount = context.watch<AccountProvider>().selectedAccount;
+                          return addBudgetModal(screenHeight, context, selectedAccount);
                         },
                       );
                     },
@@ -109,8 +107,7 @@ class _BudgetPageState extends State<BudgetPage> {
     );
   }
 
-  ClipRRect budgetModal(double screenHeight, BuildContext context) {
-    String? selectedAccount = context.watch<AccountProvider>().selectedAccount;
+  ClipRRect addBudgetModal(double screenHeight, BuildContext context, String? selectedAccount) {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(40.0),
@@ -219,7 +216,7 @@ class _BudgetPageState extends State<BudgetPage> {
                           contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                         ),
                         onTap: () async {
-                          selectedStartDate = await _selectDate(_startDateController, DateType.start);
+                          selectedStartDateBudget = await _selectDateBudget(_startDateController, DateType.start);
                         },
                       ),
                     ),
@@ -257,7 +254,7 @@ class _BudgetPageState extends State<BudgetPage> {
                           contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                         ),
                         onTap: () async {
-                          selectedEndDate = await _selectDate(_endDateController, DateType.end);
+                          selectedEndDateBudget = await _selectDateBudget(_endDateController, DateType.end);
                         },
                       ),
                     ),
@@ -307,16 +304,61 @@ class _BudgetPageState extends State<BudgetPage> {
                           ),
                           backgroundColor: kBlueColor,
                         ),
-                        onPressed: () {
-                          String newCategory = _budgetNameController.text;
-                          int budgetStartDate = selectedStartDate!.millisecondsSinceEpoch;
-                          int budgetEndDate = selectedEndDate!.millisecondsSinceEpoch;
-                          double amount = double.parse(_amountController.text.replaceAll(",", ""));
+                        onPressed: () async {
+                          // Validate the form fields
                           if (_formKey.currentState!.validate()) {
-                            widget.onAddItems!(newCategory);
-                            _firebaseServices.addBudget(
+                            // Check if the start and end dates are properly selected
+                            if (selectedStartDateBudget == null) {
+                              // Show an error if the start date is not selected
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Please select a start date for the budget.")),
+                              );
+                              return;
+                            }
+
+                            if (selectedEndDateBudget == null) {
+                              // Show an error if the end date is not selected
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Please select an end date for the budget.")),
+                              );
+                              return;
+                            }
+
+                            // Try to parse the target amount
+                            double amount;
+                            String amountText = _amountController.text.replaceAll(",", "");
+                            try {
+                              amount = double.parse(amountText);
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Please enter a valid target amount.")),
+                              );
+                              return;
+                            }
+
+                            // If everything is valid, proceed to add the budget
+                            String newCategory = _budgetNameController.text;
+                            int budgetStartDate = selectedStartDateBudget!.millisecondsSinceEpoch;
+                            int budgetEndDate = selectedEndDateBudget!.millisecondsSinceEpoch;
+
+                            await _firebaseServices.addBudget(
                                 selectedAccount!, _budgetNameController.text, budgetStartDate, budgetEndDate, amount);
+
+                            // Add the new item using the callback
+                            widget.onAddItems!(newCategory);
+
+                            // Clear the form fields after successful addition
                             clearFormFields();
+
+                            // Show a success snackbar
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Budget added successfully! Great job staying on track!'),
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
+
+                            // Close the add budget modal
                             Navigator.pop(context);
                           }
                         },
@@ -336,15 +378,10 @@ class _BudgetPageState extends State<BudgetPage> {
     );
   }
 
-  Future<DateTime?> _selectDate(
-      TextEditingController dateController, DateType dateType) async {
+  Future<DateTime?> _selectDateBudget(TextEditingController dateController, DateType dateType) async {
     DateTime initialDate = DateTime.now();
-    DateTime firstDate = dateType == DateType.start
-        ? DateTime(2000)
-        : DateTime.now().add(const Duration(days: 1));
-    DateTime lastDate = dateType == DateType.start
-        ? DateTime.now()
-        : DateTime(2100);
+    DateTime firstDate = dateType == DateType.start ? DateTime(2000) : DateTime.now().add(const Duration(days: 1));
+    DateTime lastDate = dateType == DateType.start ? DateTime.now() : DateTime(2100);
 
     // Ensure initialDate is not before firstDate to avoid assertion error
     if (dateType == DateType.end) {
@@ -364,7 +401,6 @@ class _BudgetPageState extends State<BudgetPage> {
     }
     return null;
   }
-
 }
 
 enum DateType { start, end }

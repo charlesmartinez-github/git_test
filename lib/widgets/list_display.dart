@@ -67,7 +67,7 @@ class _ExpenseListWidgetState extends State<ExpenseListWidget> {
                       style: const TextStyle(fontSize: 12.0, color: kGrayColor),
                     ),
                     trailing: Text(
-                      'P${expense['amount'].toString()}',
+                      '₱${NumberFormat("#,##0.00", "en_US").format(expense['amount'])}',
                       style: const TextStyle(color: Colors.red),
                     ),
                   ),
@@ -188,7 +188,7 @@ class _BudgetListWidgetState extends State<BudgetListWidget> {
                             ],
                           ),
                           subtitle: Text(
-                            'Spending: ₱${spentAmount.toStringAsFixed(2)}\nBudget: ₱${amount.toStringAsFixed(2)}',
+                            'Spending: ₱${NumberFormat("#,##0.00", "en_US").format(spentAmount)}\nBudget: ₱${NumberFormat("#,##0.00", "en_US").format(amount)}',
                           ),
                           trailing: (isBudgetExpired || isBudgetMaxed)
                               ? Row(
@@ -352,6 +352,7 @@ class GoalsListWidget extends StatefulWidget {
 
 class _GoalsListWidgetState extends State<GoalsListWidget> {
   bool showGoals = true;
+  bool showArchived = false;
 
   @override
   Widget build(BuildContext context) {
@@ -359,59 +360,86 @@ class _GoalsListWidgetState extends State<GoalsListWidget> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.showButtons)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        showGoals = true;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18.0),
-                          side: BorderSide(color: showGoals ? Colors.transparent : Colors.grey.shade300)),
-                      backgroundColor: showGoals ? kBlueColor : Colors.white,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      showGoals = true;
+                      showArchived = false;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18.0),
+                        side: BorderSide(color: showGoals ? Colors.transparent : Colors.grey.shade300)),
+                    backgroundColor: showGoals ? kBlueColor : Colors.white,
+                  ),
+                  child: Text('Goals',
+                      style: TextStyle(
+                        fontSize: 11.0,
+                        color: showGoals ? Colors.white : Colors.black,
+                      )),
+                ),
+              ),
+              const SizedBox(width: 10.0),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      showGoals = false;
+                      showArchived = false;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18.0),
+                        side: BorderSide(color: !showGoals && !showArchived ? Colors.transparent : Colors.grey.shade300)),
+                    backgroundColor: !showGoals && !showArchived ? kBlueColor : Colors.white,
+                  ),
+                  child: Text(
+                    'History',
+                    style: TextStyle(
+                      fontSize: 11.0,
+                      color: !showGoals && !showArchived ? Colors.white : Colors.black,
                     ),
-                    child: Text('Goals',
-                        style: TextStyle(
-                          color: showGoals ? Colors.white : Colors.black,
-                        )),
                   ),
                 ),
-                const SizedBox(width: 10.0),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        showGoals = false;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18.0),
-                          side: BorderSide(color: !showGoals ? Colors.transparent : Colors.grey.shade300)),
-                      backgroundColor: !showGoals ? kBlueColor : Colors.white,
-                    ),
-                    child: Text(
-                      'History',
-                      style: TextStyle(
-                        color: !showGoals ? Colors.white : Colors.black,
-                      ),
+              ),
+              const SizedBox(width: 10.0),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      showArchived = true;
+                      showGoals = false;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18.0),
+                        side: BorderSide(color: showArchived ? Colors.transparent : Colors.grey.shade300)),
+                    backgroundColor: showArchived ? kBlueColor : Colors.white,
+                  ),
+                  child: Text(
+                    'Archived',
+                    style: TextStyle(
+                      fontSize: 11.0,
+                      color: showArchived ? Colors.white : Colors.black,
                     ),
                   ),
-                )
-              ],
-            ),
+                ),
+              ),
+            ],
           ),
         Flexible(
           child: StreamBuilder<List<DocumentSnapshot>>(
             stream: showGoals
                 ? widget.firebaseServices.getUserGoalsListView(widget.selectedAccount)
+                : showArchived
+                ? widget.firebaseServices.getArchivedGoalsListView(widget.selectedAccount)
                 : widget.firebaseServices.getGoalFundsHistory(widget.selectedAccount),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -432,7 +460,7 @@ class _GoalsListWidgetState extends State<GoalsListWidget> {
                     final item = items[index];
                     final itemData = item.data() as Map<String, dynamic>;
 
-                    if (showGoals) {
+                    if (showGoals || showArchived) {
                       // Display goal information
                       DateTime startDate = DateTime.fromMillisecondsSinceEpoch(item['startDate']);
                       DateTime endDate = DateTime.fromMillisecondsSinceEpoch(item['endDate']);
@@ -499,8 +527,77 @@ class _GoalsListWidgetState extends State<GoalsListWidget> {
                                 isThreeLine: true,
                                 title: Text(itemData['description'] ?? 'No description'),
                                 subtitle: Text(
-                                    'Saved: ₱${itemData['amountSaved']} \nTarget Amount: ₱${itemData['targetAmount']}'),
-                                trailing: IconButton(
+                                  'Saved: ₱${NumberFormat("#,##0.00", "en_US").format(itemData['amountSaved'])}\nTarget Amount: ₱${NumberFormat("#,##0.00", "en_US").format(itemData['targetAmount'])}',),
+                                trailing: savedAmount >= targetAmount
+                                    ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                      onPressed: () async {
+                                        bool? confirmDelete = await showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: const Text('Delete Goal'),
+                                              content: const Text('Are you sure you want to delete this goal?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(context).pop(false),
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(context).pop(true),
+                                                  child: const Text('Delete'),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+
+                                        if (confirmDelete == true) {
+                                          if (showArchived) {
+                                            await widget.firebaseServices.deleteArchivedGoal(widget.selectedAccount, item.id);
+                                          } else {
+                                            await widget.firebaseServices.deleteGoal(widget.selectedAccount, item.id);
+                                          }
+                                          setState(() {});
+                                        }
+                                      },
+                                    ),
+                                    if (!showArchived)
+                                      IconButton(
+                                        icon: const Icon(Icons.archive, color: Colors.grey),
+                                        onPressed: () async {
+                                          bool? confirmArchive = await showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: const Text('Archive Goal'),
+                                                content: const Text('Are you sure you want to archive this goal?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.of(context).pop(false),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () => Navigator.of(context).pop(true),
+                                                    child: const Text('Archive'),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+
+                                          if (confirmArchive == true) {
+                                            await widget.firebaseServices.archiveGoal(widget.selectedAccount, item.id);
+                                            setState(() {});
+                                          }
+                                        },
+                                      ),
+                                  ],
+                                )
+                                    : IconButton(
                                   onPressed: () {
                                     showModalBottomSheet(
                                       context: context,
@@ -543,7 +640,7 @@ class _GoalsListWidgetState extends State<GoalsListWidget> {
                           shadowColor: kBlueColor,
                           child: ListTile(
                             isThreeLine: true,
-                            title: Text('$toGoalName'),
+                            title: Text(toGoalName),
                             subtitle: Text('Added Amount: ₱${addedAmount.toStringAsFixed(2)}\nDate: $formattedDate'),
                           ),
                         ),
@@ -560,15 +657,13 @@ class _GoalsListWidgetState extends State<GoalsListWidget> {
   }
 }
 
-class AddFundsModal extends StatelessWidget {
+class AddFundsModal extends StatefulWidget {
   final double screenHeight;
   final String goalId;
   final FirebaseAuthService firebaseServices;
   final String selectedAccount;
 
-  final TextEditingController _addFundsController = TextEditingController();
-
-  AddFundsModal({
+  const AddFundsModal({
     super.key,
     required this.screenHeight,
     required this.goalId,
@@ -577,9 +672,24 @@ class AddFundsModal extends StatelessWidget {
   });
 
   @override
+  State<AddFundsModal> createState() => _AddFundsModalState();
+}
+
+class _AddFundsModalState extends State<AddFundsModal> {
+  final TextEditingController _addFundsController = TextEditingController();
+  bool _isActive = true;
+
+  @override
+  void dispose() {
+    _isActive = false;
+    _addFundsController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: screenHeight * 0.8,
+      height: widget.screenHeight * 0.8,
       width: double.infinity,
       child: Column(
         children: <Widget>[
@@ -658,32 +768,81 @@ class AddFundsModal extends StatelessWidget {
                       _addFundsController.clear();
 
                       // Check if the selected account has sufficient funds
-                      double accountFunds = await firebaseServices.getAccountFunds(selectedAccount);
+                      double accountFunds = await widget.firebaseServices.getAccountFunds(widget.selectedAccount);
                       if (accountFunds >= amount) {
-                        // If funds are sufficient, add funds to the budget
-                        await firebaseServices.addGoalFunds(selectedAccount, goalId, amount);
-                        Navigator.pop(context); // Close the modal
+                        // If funds are sufficient, add funds to the goal
+                        await widget.firebaseServices.addGoalFunds(widget.selectedAccount, widget.goalId, amount);
+
+                        // Fetch updated goal data to verify if the goal is achieved
+                        DocumentSnapshot goalSnapshot =
+                            await widget.firebaseServices.getGoalById(widget.selectedAccount, widget.goalId);
+                        double savedAmount = (goalSnapshot['amountSaved'] as num).toDouble();
+                        double targetAmount = (goalSnapshot['targetAmount'] as num).toDouble();
+
+                        // Close the AddFundsModal
+                        if (_isActive) {
+                          Navigator.pop(context);
+                        }
+
+                        // Show congratulatory message if goal is achieved
+                        if (_isActive && savedAmount >= targetAmount) {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      'images/congratulations.png',
+                                      height: 150,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    const Text(
+                                      'Congratulations',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    const Text(
+                                      'Goal achieved!',
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text('Continue'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        }
                       } else {
                         // If funds are insufficient, close the modal and show an alert dialog
-                        Navigator.pop(context); // Close the modal first
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text('Insufficient Funds!'),
-                              content: const Text(
-                                  'You do not have sufficient funds in the selected account to add this amount.'),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop(); // Close the dialog
-                                  },
-                                  child: const Text('OK'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
+                        if (_isActive) {
+                          Navigator.pop(context); // Close the modal first
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Insufficient Funds!'),
+                                content: const Text(
+                                    'You do not have sufficient funds in the selected account to add this amount.'),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(); // Close the dialog
+                                    },
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        }
                       }
                     },
                     child: const Text(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:finedger/constants/constants.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LargeButton extends StatelessWidget {
   const LargeButton({
@@ -40,8 +41,7 @@ class LargeButton extends StatelessWidget {
 }
 
 class ButtonText extends StatelessWidget {
-  const ButtonText(
-      {super.key, required this.onPress, required this.buttonLabel});
+  const ButtonText({super.key, required this.onPress, required this.buttonLabel});
 
   final String buttonLabel;
   final VoidCallback onPress;
@@ -105,16 +105,13 @@ class _OTPFormState extends State<OTPForm> {
         ),
         border: const OutlineInputBorder(),
         isDense: true,
-        contentPadding:
-        const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
+        contentPadding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
       ),
     );
   }
 }
 
-
 class SignUpForm extends StatefulWidget {
-
   const SignUpForm({
     super.key,
     required this.controller,
@@ -122,30 +119,45 @@ class SignUpForm extends StatefulWidget {
     required this.keyboardType,
     required this.obscureText,
     required this.labelText,
+    this.showSuffixIcon = false,
   });
 
   final TextEditingController controller;
-  final FormFieldValidator<String> validator;
+  final String? Function(String?) validator;
   final TextInputType keyboardType;
   final bool obscureText;
   final String labelText;
+  final bool showSuffixIcon;
 
   @override
   State<SignUpForm> createState() => _SignUpFormState();
 }
 
 class _SignUpFormState extends State<SignUpForm> {
-
+  bool _obscurePassword = true;
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: widget.controller,
       validator: widget.validator,
       keyboardType: widget.keyboardType,
-      obscureText: widget.obscureText,
+      obscureText: widget.showSuffixIcon ? _obscurePassword : widget.obscureText,
       autovalidateMode: AutovalidateMode.onUnfocus,
       decoration: InputDecoration(
+        suffixIcon: widget.showSuffixIcon
+            ? IconButton(
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+                icon: Icon(
+                  _obscurePassword ? FontAwesomeIcons.eye : FontAwesomeIcons.eyeSlash,
+                ),
+              )
+            : null,
         labelText: widget.labelText,
+        errorMaxLines: 2,
         floatingLabelStyle: const TextStyle(
           color: kBlueColor,
         ),
@@ -163,8 +175,7 @@ class _SignUpFormState extends State<SignUpForm> {
         ),
         border: const OutlineInputBorder(),
         isDense: true,
-        contentPadding:
-        const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
+        contentPadding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
       ),
     );
   }
@@ -190,7 +201,6 @@ class LoginForm extends StatefulWidget {
   final bool enableSuggestions;
   final bool autoCorrect;
 
-
   @override
   State<LoginForm> createState() => _LoginFormState();
 }
@@ -207,13 +217,12 @@ class _LoginFormState extends State<LoginForm> {
         keyboardType: widget.keyboardType,
         enableSuggestions: widget.enableSuggestions,
         autocorrect: widget.autoCorrect,
-        decoration:  InputDecoration(
+        decoration: InputDecoration(
           fillColor: Colors.white,
           filled: true,
           border: InputBorder.none,
           hintText: widget.hintText,
-          hintStyle: const TextStyle(color: kGrayColor,
-              fontSize: 15.0),
+          hintStyle: const TextStyle(color: kGrayColor, fontSize: 15.0),
           contentPadding: const EdgeInsets.fromLTRB(15.0, 8.0, 8.0, 8.0),
         ),
       ),
@@ -223,11 +232,14 @@ class _LoginFormState extends State<LoginForm> {
 
 class FederatedIdentitySignInButton extends StatelessWidget {
   const FederatedIdentitySignInButton({
-    super.key, required this.icon, required this.label,
+    super.key,
+    required this.icon,
+    required this.label, required this.onPressed,
   });
 
   final Icon icon;
   final String label;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -249,7 +261,7 @@ class FederatedIdentitySignInButton extends StatelessWidget {
             ),
           ),
         ),
-        onPressed: () {},
+        onPressed: onPressed,
       ),
     );
   }
@@ -257,7 +269,9 @@ class FederatedIdentitySignInButton extends StatelessWidget {
 
 class SmallButton extends StatelessWidget {
   const SmallButton({
-    super.key, required this.buttonLabel, required this.onPress,
+    super.key,
+    required this.buttonLabel,
+    required this.onPress,
   });
 
   final String buttonLabel;
@@ -287,7 +301,10 @@ class SmallButton extends StatelessWidget {
 
 class ChangePasswordForm extends StatelessWidget {
   const ChangePasswordForm({
-    super.key, required this.keyboardType, required this.hintText, required this.obscureText,
+    super.key,
+    required this.keyboardType,
+    required this.hintText,
+    required this.obscureText,
   });
 
   final TextInputType keyboardType;
@@ -296,7 +313,6 @@ class ChangePasswordForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final screenHeight = MediaQuery.sizeOf(context).height;
     final screenWidth = MediaQuery.sizeOf(context).width;
 

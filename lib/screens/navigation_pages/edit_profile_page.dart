@@ -1,219 +1,73 @@
 import 'package:finedger/widgets/for_gettingstarted.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 
 class EditProfilePage extends StatefulWidget {
-  const EditProfilePage({super.key});
+  final String userId; // Pass user ID to the page
+
+  const EditProfilePage({super.key, required this.userId});
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  final List<String> countries = [
-    'Afghanistan',
-    'Albania',
-    'Algeria',
-    'Andorra',
-    'Angola',
-    'Antigua and Barbuda',
-    'Argentina',
-    'Armenia',
-    'Australia',
-    'Austria',
-    'Azerbaijan',
-    'Bahamas',
-    'Bahrain',
-    'Bangladesh',
-    'Barbados',
-    'Belarus',
-    'Belgium',
-    'Belize',
-    'Benin',
-    'Bhutan',
-    'Bolivia',
-    'Bosnia and Herzegovina',
-    'Botswana',
-    'Brazil',
-    'Brunei',
-    'Bulgaria',
-    'Burkina Faso',
-    'Burundi',
-    'Cabo Verde',
-    'Cambodia',
-    'Cameroon',
-    'Canada',
-    'Central African Republic',
-    'Chad',
-    'Chile',
-    'China',
-    'Colombia',
-    'Comoros',
-    'Congo (Congo-Brazzaville)',
-    'Costa Rica',
-    'Croatia',
-    'Cuba',
-    'Cyprus',
-    'Czechia (Czech Republic)',
-    'Democratic Republic of the Congo',
-    'Denmark',
-    'Djibouti',
-    'Dominica',
-    'Dominican Republic',
-    'Ecuador',
-    'Egypt',
-    'El Salvador',
-    'Equatorial Guinea',
-    'Eritrea',
-    'Estonia',
-    'Eswatini (fmr. "Swaziland")',
-    'Ethiopia',
-    'Fiji',
-    'Finland',
-    'France',
-    'Gabon',
-    'Gambia',
-    'Georgia',
-    'Germany',
-    'Ghana',
-    'Greece',
-    'Grenada',
-    'Guatemala',
-    'Guinea',
-    'Guinea-Bissau',
-    'Guyana',
-    'Haiti',
-    'Honduras',
-    'Hungary',
-    'Iceland',
-    'India',
-    'Indonesia',
-    'Iran',
-    'Iraq',
-    'Ireland',
-    'Israel',
-    'Italy',
-    'Jamaica',
-    'Japan',
-    'Jordan',
-    'Kazakhstan',
-    'Kenya',
-    'Kiribati',
-    'Kuwait',
-    'Kyrgyzstan',
-    'Laos',
-    'Latvia',
-    'Lebanon',
-    'Lesotho',
-    'Liberia',
-    'Libya',
-    'Liechtenstein',
-    'Lithuania',
-    'Luxembourg',
-    'Madagascar',
-    'Malawi',
-    'Malaysia',
-    'Maldives',
-    'Mali',
-    'Malta',
-    'Marshall Islands',
-    'Mauritania',
-    'Mauritius',
-    'Mexico',
-    'Micronesia',
-    'Moldova',
-    'Monaco',
-    'Mongolia',
-    'Montenegro',
-    'Morocco',
-    'Mozambique',
-    'Myanmar (formerly Burma)',
-    'Namibia',
-    'Nauru',
-    'Nepal',
-    'Netherlands',
-    'New Zealand',
-    'Nicaragua',
-    'Niger',
-    'Nigeria',
-    'North Korea',
-    'North Macedonia',
-    'Norway',
-    'Oman',
-    'Pakistan',
-    'Palau',
-    'Panama',
-    'Papua New Guinea',
-    'Paraguay',
-    'Peru',
-    'Philippines',
-    'Poland',
-    'Portugal',
-    'Qatar',
-    'Romania',
-    'Russia',
-    'Rwanda',
-    'Saint Kitts and Nevis',
-    'Saint Lucia',
-    'Saint Vincent and the Grenadines',
-    'Samoa',
-    'San Marino',
-    'Sao Tome and Principe',
-    'Saudi Arabia',
-    'Senegal',
-    'Serbia',
-    'Seychelles',
-    'Sierra Leone',
-    'Singapore',
-    'Slovakia',
-    'Slovenia',
-    'Solomon Islands',
-    'Somalia',
-    'South Africa',
-    'South Korea',
-    'South Sudan',
-    'Spain',
-    'Sri Lanka',
-    'Sudan',
-    'Suriname',
-    'Sweden',
-    'Switzerland',
-    'Syria',
-    'Taiwan',
-    'Tajikistan',
-    'Tanzania',
-    'Thailand',
-    'Timor-Leste',
-    'Togo',
-    'Tonga',
-    'Trinidad and Tobago',
-    'Tunisia',
-    'Turkey',
-    'Turkmenistan',
-    'Tuvalu',
-    'Uganda',
-    'Ukraine',
-    'United Arab Emirates',
-    'United Kingdom',
-    'United States of America',
-    'Uruguay',
-    'Uzbekistan',
-    'Vanuatu',
-    'Vatican City',
-    'Venezuela',
-    'Vietnam',
-    'Yemen',
-    'Zambia',
-    'Zimbabwe'
-  ];
+  // final List<String> countries = [...]; // Keep your countries list here
 
-  String? _selectedValueGender;
-  String? _selectedValueCountry;
+  // Controllers for the text fields
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _labelController = TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
+
   // Key to uniquely identify the form
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   // Store the selected phone number and ISO code
   PhoneNumber _phoneNumber = PhoneNumber(isoCode: 'PH');
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // Function to load the user data from Firestore
+  void _loadUserData() async {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+
+    if (userDoc.exists) {
+      setState(() {
+        _firstNameController.text = userDoc['firstName'] ?? '';
+        _lastNameController.text = userDoc['lastName'] ?? '';
+        _labelController.text = userDoc['label'] ?? '';
+        _phoneNumberController.text = userDoc['phoneNumber'] ?? '';
+      });
+    }
+  }
+
+  // Function to update the user data in Firestore
+  void _updateUserData() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
+          'firstName': _firstNameController.text,
+          'lastName': _lastNameController.text,
+          'label': _labelController.text,
+          'phoneNumber': _phoneNumber.phoneNumber,
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update profile: $e')),
+        );
+      }
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -226,7 +80,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       appBar: AppBar(
         title: const Text('Edit profile'),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        forceMaterialTransparency: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -236,49 +90,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
               right: screenWidth * 0.08,
               top: screenWidth * 0.05,
             ),
-            child: Column(
-              children: <Widget>[
-                Container(
-                  height: screenHeight * 0.073,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(10),
-                    ),
-                  ),
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: "Name",
-                      labelStyle: TextStyle(fontSize: 13.0),
-                      floatingLabelBehavior: FloatingLabelBehavior.always,
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                Container(
-                  height: screenHeight * 0.073,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(10),
-                    ),
-                  ),
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: "Label",
-                      labelStyle: TextStyle(fontSize: 13.0),
-                      floatingLabelBehavior: FloatingLabelBehavior.always,
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                Form(
-                  key: _formKey,
-                  child: Container(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: <Widget>[
+                  Container(
                     height: screenHeight * 0.073,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
@@ -287,110 +103,116 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         Radius.circular(10),
                       ),
                     ),
+                    child: TextFormField(
+                      controller: _firstNameController,
+                      decoration: const InputDecoration(
+                        labelText: "First name",
+                        labelStyle: TextStyle(fontSize: 13.0),
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        border: InputBorder.none,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your first name';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
+                  Container(
+                    height: screenHeight * 0.073,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(10),
+                      ),
+                    ),
+                    child: TextFormField(
+                      controller: _lastNameController,
+                      decoration: const InputDecoration(
+                        labelText: "Last Name",
+                        labelStyle: TextStyle(fontSize: 13.0),
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        border: InputBorder.none,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your last name';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
+                  Container(
+                    height: screenHeight * 0.073,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(10),
+                      ),
+                    ),
+                    child: TextFormField(
+                      controller: _labelController,
+                      decoration: const InputDecoration(
+                        labelText: "Label",
+                        labelStyle: TextStyle(fontSize: 13.0),
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(10),
+                      ),
+                    ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // InternationalPhoneNumberInput widget
-                        // for phone number input
                         InternationalPhoneNumberInput(
-                          // Callback for when the input changes
                           onInputChanged: (PhoneNumber number) {
                             _phoneNumber = number;
                           },
-                          // Callback for when the input is validated
-                          onInputValidated: (bool value) {
-                            // You can perform additional validation here if needed
-                          },
-                          // Configuration for the country selector
+                          initialValue: _phoneNumber,
+                          textFieldController: _phoneNumberController,
                           selectorConfig: const SelectorConfig(
                             trailingSpace: false,
                             selectorType: PhoneInputSelectorType.DIALOG,
                           ),
-                          // Ignore blank input
-                          ignoreBlank: false,
-                          // Auto-validation mode
-                          autoValidateMode: AutovalidateMode.onUserInteraction,
-                          // Style for the country selector
-                          selectorTextStyle: const TextStyle(color: Colors.black),
-                          // Initial value for the phone number input
-                          initialValue: _phoneNumber,
-                          // Controller for the text field
-                          textFieldController: TextEditingController(),
-                          // Decoration for the input field
+                          countries: const ['PH'], // Only allow phone numbers from the Philippines
                           inputDecoration: const InputDecoration(
-                              isDense: true,
-                              border: InputBorder.none,
-                              labelText: 'Phone Number',
-                              floatingLabelStyle: TextStyle(fontSize: 13.0),
-                              floatingLabelBehavior: FloatingLabelBehavior.always),
-                          // Format input (e.g., adding spaces between digits)
+                            isDense: true,
+                            labelText: 'Phone Number',
+                            floatingLabelStyle: TextStyle(fontSize: 13.0),
+                            floatingLabelBehavior: FloatingLabelBehavior.always,
+                          ),
                           formatInput: false,
+                          validator: (value) {
+                            // Custom validator to ensure the phone number is not empty or invalid
+                            if (value == null || value.isEmpty || value.length != 10) {
+                              return 'Please enter a valid phone number';
+                            }
+                            return null;
+                          },
                         ),
                       ],
                     ),
                   ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                Container(
-                  height: screenHeight * 0.073,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(10),
-                    ),
+                  SizedBox(height: screenHeight * 0.02),
+                  SmallButton(
+                    buttonLabel: 'SUBMIT',
+                    onPress: _updateUserData,
                   ),
-                  child: DropdownButtonFormField(
-                    items: const [],
-                    onChanged: (value) {},
-                    decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        labelStyle: TextStyle(fontSize: 13.0),
-                        labelText: 'Country',
-                        floatingLabelBehavior: FloatingLabelBehavior.always),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                Container(
-                  height: screenHeight * 0.073,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(10),
-                    ),
-                  ),
-                  child: DropdownButtonFormField(
-                    items: const [],
-                    onChanged: (value) {},
-                    decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        labelStyle: TextStyle(fontSize: 13.0),
-                        labelText: 'Gender',
-                        floatingLabelBehavior: FloatingLabelBehavior.always),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                Container(
-                  height: screenHeight * 0.073,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(10),
-                    ),
-                  ),
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: "Address",
-                      labelStyle: TextStyle(fontSize: 13.0),
-                      floatingLabelBehavior: FloatingLabelBehavior.always,
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                SmallButton(buttonLabel: 'SUBMIT', onPress: () {})
-              ],
+                ],
+              ),
             ),
           ),
         ),

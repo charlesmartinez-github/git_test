@@ -20,8 +20,7 @@ class EmailVerification extends StatefulWidget {
       required this.password,
       required this.firstName,
       required this.lastName,
-      required this.phoneNumber
-      });
+      required this.phoneNumber});
 
   @override
   State<EmailVerification> createState() => _EmailVerificationState();
@@ -34,11 +33,33 @@ class _EmailVerificationState extends State<EmailVerification> {
 
   final TextEditingController _otpController = TextEditingController();
 
+  bool isSending = false;
+  bool isVerifying = false;
+
   @override
   void initState() {
     super.initState();
-    _otp.sendOTPto(widget.email);
-    print(_otp.getOTP());
+    sendOtp();
+  }
+
+  Future<void> sendOtp() async {
+    try {
+      setState(() {
+        isSending = true;
+      });
+      await _otp.sendOTPto(widget.email);
+      log('OTP sent to ${widget.email}');
+    } catch (e) {
+      log("Failed to send OTP: $e");
+      // Show user feedback here, such as a snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to send OTP. Please try again.')),
+      );
+    } finally {
+      setState(() {
+        isSending = false;
+      });
+    }
   }
 
   @override
@@ -99,32 +120,56 @@ class _EmailVerificationState extends State<EmailVerification> {
                   const SizedBox(height: 25.0),
                   LargeButton(
                     onPress: () async {
-                      log(_otpController.text);
-                      log(_otp.getOTP().toString());
+                      FocusScope.of(context).unfocus(); // Hide the keyboard
                       if (_formKey.currentState!.validate()) {
-                        bool isVerified =
-                            await _otp.verifyOTP(_otpController.text);
-                        if (isVerified) {
-                          _signUp();
+                        try {
+                          setState(() {
+                            isVerifying = true;
+                          });
+                          bool isVerified = await _otp.verifyOTP(_otpController.text);
+                          if (isVerified) {
+                            _signUp();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Incorrect OTP. Please try again.')),
+                            );
+                          }
+                        } catch (e) {
+                          log("Error during OTP verification: $e");
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Failed to verify OTP. Please try again.')),
+                          );
+                        } finally {
+                          setState(() {
+                            isVerifying = false;
+                          });
                         }
                       }
                     },
-                    buttonLabel: 'Confirm',
+                    buttonLabel: isVerifying ? 'Verifying...' : 'Confirm',
                     backgroundColor: kBlueColor,
                   ),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      const Text(
-                        'Still haven\'t got your code?',
-                        style: TextStyle(color: kGrayColor, fontSize: 13.0),
+                      const Expanded(
+                        child: Text(
+                          'Didn\'t get your code?',
+                          style: TextStyle(color: kGrayColor, fontSize: 13.0),
+                        ),
                       ),
-                      TextButton(
-                        onPressed: () {_otp.sendOTPto(widget.email);},
-                        child: const Text(
-                          'Send a new code',
-                          style: TextStyle(
-                              color: Color(0xff30437a), fontSize: 13.0),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: isSending
+                              ? null
+                              : () {
+                                  sendOtp();
+                                },
+                          child: Text(
+                            isSending ? 'Sending...' : 'Send a new code',
+                            style: const TextStyle(color: Color(0xff30437a), fontSize: 13.0),
+                          ),
                         ),
                       ),
                     ],
@@ -178,10 +223,9 @@ class _EmailVerificationState extends State<EmailVerification> {
     );
   }
 
-
   _signUp() async {
-    final user = await _auth.createUserWithEmailAndPassword(widget.email,
-        widget.password, widget.firstName, widget.lastName, widget.phoneNumber);
+    final user = await _auth.createUserWithEmailAndPassword(
+        widget.email, widget.password, widget.firstName, widget.lastName, widget.phoneNumber);
     if (user != null) {
       Navigator.pushReplacement(
         context,
@@ -190,6 +234,10 @@ class _EmailVerificationState extends State<EmailVerification> {
             return const SuccessfulSignup();
           },
         ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sign up failed. Please try again.')),
       );
     }
   }

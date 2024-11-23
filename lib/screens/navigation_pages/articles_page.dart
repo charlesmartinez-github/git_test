@@ -14,20 +14,20 @@ class _ArticlesPageState extends State<ArticlesPage> {
     {
       'title': '10 Tips for Building a Strong Financial Foundation',
       'date': '6th May',
-      'image': 'path/to/image1',
-      'url': 'https://pub.dev'
+      'image': 'images/1.png',
+      'url': 'https://www.universalfunding.com/financial-foundation/'
     },
     {
       'title': 'How to Create a Budget That Works for You',
       'date': '6th May',
-      'image': 'path/to/image2',
-      'url': 'https://pub.dev'
+      'image': 'images/2.png',
+      'url': 'https://www.nerdwallet.com/article/finance/how-to-budget'
     },
     {
-      'title': 'How to Create a Budget That Works for You',
+      'title': 'Understanding Your Credit Score',
       'date': '6th May',
-      'image': 'path/to/image2',
-      'url': 'https://pub.dev'
+      'image': 'images/3.png',
+      'url': 'https://consumer.ftc.gov/articles/understanding-your-credit'
     }
     // Add more articles here
   ];
@@ -92,12 +92,12 @@ class _ArticlesPageState extends State<ArticlesPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            // Expanded(
-                            //   child: Image.asset(
-                            //     article['image']!,
-                            //     fit: BoxFit.cover,
-                            //   ),
-                            // ),
+                            Expanded(
+                              child: Image.asset(
+                                article['image']!,
+                                fit: BoxFit.fill,
+                              ),
+                            ),
                             ListTile(
                               title: Text(
                                 article['title']!,

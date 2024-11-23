@@ -1,6 +1,8 @@
 import 'package:finedger/providers/page_provider.dart';
 import 'package:finedger/screens/getting_started/login_page.dart';
 import 'package:finedger/screens/navigation_pages/dashboard_page.dart';
+import 'package:finedger/screens/navigation_pages/fingpt_page.dart';
+import 'package:finedger/screens/navigation_pages/notify_page.dart';
 import 'package:finedger/screens/navigation_pages/profile_settings.dart';
 import 'package:finedger/services/firebase_auth_services.dart';
 import 'package:flutter/material.dart';
@@ -132,13 +134,24 @@ class _NavigationState extends State<Navigation> {
             centerTitle: true,
             actions: <Widget>[
               IconButton(
-                onPressed: () {},
-                icon: const Icon(FontAwesomeIcons.comment),
+                icon: const ImageIcon(
+                  AssetImage("images/fingpticon.png"),
+                  color: kBlueColor,
+                  size: 30,
+                ), onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) {
+                      return const FinGPT();
+                    }));
+              },
               ),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(FontAwesomeIcons.bell),
-              ),
+              // IconButton(
+              //   onPressed: () {
+              //     Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) {
+              //       return const NotifyPage();
+              //     }));
+              //   },
+              //   icon: const Icon(FontAwesomeIcons.bell),
+              // ),
             ],
           ),
           drawer: Drawer(
@@ -147,8 +160,8 @@ class _NavigationState extends State<Navigation> {
               padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
               children: [
                 DrawerHeader(
-                  child: FutureBuilder(
-                      future: _firebaseServices.getUserFirstName(),
+                  child: StreamBuilder(
+                      stream: _firebaseServices.getUserFirstNameStream(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Center(child: LinearProgressIndicator());
@@ -250,6 +263,7 @@ class _NavigationState extends State<Navigation> {
 
   Widget _buildDrawerItem({required IconData icon, required String text, required VoidCallback onTap}) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 8.0),
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFfbfcfb),

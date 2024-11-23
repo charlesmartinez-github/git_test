@@ -9,11 +9,21 @@ class NotificationPage extends StatefulWidget {
 }
 
 class _NotificationPageState extends State<NotificationPage> {
-  bool isChecked = false;
+  // Map to manage the state of each switch
+  Map<String, bool> switchStates = {
+    'generalNotification': false,
+    'sound': false,
+    'vibrate': false,
+    'appUpdates': false,
+    'budgetReminder': false,
+    'expenseReminder': false,
+    'goalsReminder': false,
+    'newService': false,
+    'newTips': false,
+  };
 
   @override
   Widget build(BuildContext context) {
-
     final screenWidth = MediaQuery.sizeOf(context).width;
 
     return Scaffold(
@@ -36,72 +46,9 @@ class _NotificationPageState extends State<NotificationPage> {
               'Common',
               style: TextStyle(fontSize: 17.0, fontWeight: FontWeight.w500),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                const Text('General Notification'),
-                SizedBox(
-                  height: 28.0,
-                  width: 60.0,
-                  child: FittedBox(
-                    fit: BoxFit.fill,
-                    child: Switch(
-                      activeTrackColor: kLightBlueColor,
-                      value: isChecked,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          isChecked = newValue;
-                        });
-                      },
-                    ),
-                  ),
-                )
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                const Text('Sound'),
-                SizedBox(
-                  height: 28.0,
-                  width: 60.0,
-                  child: FittedBox(
-                    fit: BoxFit.fill,
-                    child: Switch(
-                      activeTrackColor: kLightBlueColor,
-                      value: isChecked,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          isChecked = newValue;
-                        });
-                      },
-                    ),
-                  ),
-                )
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                const Text('Vibrate'),
-                SizedBox(
-                  height: 28.0,
-                  width: 60.0,
-                  child: FittedBox(
-                    fit: BoxFit.fill,
-                    child: Switch(
-                      activeTrackColor: kLightBlueColor,
-                      value: isChecked,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          isChecked = newValue;
-                        });
-                      },
-                    ),
-                  ),
-                )
-              ],
-            ),
+            _buildSwitchRow('General Notification', 'generalNotification'),
+            _buildSwitchRow('Sound', 'sound'),
+            _buildSwitchRow('Vibrate', 'vibrate'),
             const Divider(
               color: kGrayColor,
             ),
@@ -109,94 +56,10 @@ class _NotificationPageState extends State<NotificationPage> {
               'System & Services update',
               style: TextStyle(fontSize: 17.0, fontWeight: FontWeight.w500),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                const Text('App updates'),
-                SizedBox(
-                  height: 28.0,
-                  width: 60.0,
-                  child: FittedBox(
-                    fit: BoxFit.fill,
-                    child: Switch(
-                      activeTrackColor: kLightBlueColor,
-                      value: isChecked,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          isChecked = newValue;
-                        });
-                      },
-                    ),
-                  ),
-                )
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                const Text('Budget reminder'),
-                SizedBox(
-                  height: 28.0,
-                  width: 60.0,
-                  child: FittedBox(
-                    fit: BoxFit.fill,
-                    child: Switch(
-                      activeTrackColor: kLightBlueColor,
-                      value: isChecked,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          isChecked = newValue;
-                        });
-                      },
-                    ),
-                  ),
-                )
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                const Text('Expense reminder'),
-                SizedBox(
-                  height: 28.0,
-                  width: 60.0,
-                  child: FittedBox(
-                    fit: BoxFit.fill,
-                    child: Switch(
-                      activeTrackColor: kLightBlueColor,
-                      value: isChecked,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          isChecked = newValue;
-                        });
-                      },
-                    ),
-                  ),
-                )
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                const Text('Goals reminder'),
-                SizedBox(
-                  height: 28.0,
-                  width: 60.0,
-                  child: FittedBox(
-                    fit: BoxFit.fill,
-                    child: Switch(
-                      activeTrackColor: kLightBlueColor,
-                      value: isChecked,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          isChecked = newValue;
-                        });
-                      },
-                    ),
-                  ),
-                )
-              ],
-            ),
+            _buildSwitchRow('App updates', 'appUpdates'),
+            _buildSwitchRow('Budget reminder', 'budgetReminder'),
+            _buildSwitchRow('Expense reminder', 'expenseReminder'),
+            _buildSwitchRow('Goals reminder', 'goalsReminder'),
             const Divider(
               color: kGrayColor,
             ),
@@ -204,53 +67,37 @@ class _NotificationPageState extends State<NotificationPage> {
               'Others',
               style: TextStyle(fontSize: 17.0, fontWeight: FontWeight.w500),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                const Text('New Service Available'),
-                SizedBox(
-                  height: 28.0,
-                  width: 60.0,
-                  child: FittedBox(
-                    fit: BoxFit.fill,
-                    child: Switch(
-                      activeTrackColor: kLightBlueColor,
-                      value: isChecked,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          isChecked = newValue;
-                        });
-                      },
-                    ),
-                  ),
-                )
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                const Text('New Tips Available'),
-                SizedBox(
-                  height: 28.0,
-                  width: 60.0,
-                  child: FittedBox(
-                    fit: BoxFit.fill,
-                    child: Switch(
-                      activeTrackColor: kLightBlueColor,
-                      value: isChecked,
-                      onChanged: (bool newValue) {
-                        setState(() {
-                          isChecked = newValue;
-                        });
-                      },
-                    ),
-                  ),
-                )
-              ],
-            ),
+            _buildSwitchRow('New Service Available', 'newService'),
+            _buildSwitchRow('New Tips Available', 'newTips'),
           ],
         ),
       ),
+    );
+  }
+
+  // Helper method to build a switch row
+  Widget _buildSwitchRow(String label, String switchKey) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Text(label),
+        SizedBox(
+          height: 35.0,
+          width: 60.0,
+          child: FittedBox(
+            fit: BoxFit.fill,
+            child: Switch(
+              activeTrackColor: kLightBlueColor,
+              value: switchStates[switchKey] ?? false,
+              onChanged: (bool newValue) {
+                setState(() {
+                  switchStates[switchKey] = newValue;
+                });
+              },
+            ),
+          ),
+        )
+      ],
     );
   }
 }

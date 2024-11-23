@@ -38,9 +38,15 @@ dependencies:
   font_awesome_flutter: ^10.7.0
   intl_phone_number_input: ^0.7.4
   country_picker: ^2.0.26
+  flutter_local_notifications: ^18.0.1
+  workmanager: ^0.5.2
+  firebase_messaging: ^15.1.5
   intl: ^0.19.0
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
+  audioplayers: ^6.1.0
+  flutter_sound: ^9.17.0
+  share_plus: ^10.1.2
   cloud_firestore: ^5.4.4
   email_otp: ^3.0.2
   google_fonts: ^6.2.1
@@ -55,7 +61,10 @@ dependencies:
   dio: ^5.7.0
   shared_preferences: ^2.3.3
   connectivity_plus: ^6.1.0
+  google_sign_in: ^6.2.2
 
+dependency_overrides:
+  js: ^0.7.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -66,12 +75,22 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  flutter_native_splash: ^2.4.3
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
+flutter_native_splash:
+  color: "#42a5f5"  # Background color of your splash screen.
+  image: images/splash.png  # Path to your splash screen image.
+  android: true  # Apply splash screen to Android.
+  ios: true  # Apply splash screen to iOS.
+  fullscreen: true  # Optional: make the splash screen fullscreen.
+
 flutter:
+
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

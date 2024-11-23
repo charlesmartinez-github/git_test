@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finedger/constants/constants.dart';
 import 'package:finedger/providers/account_provider.dart';
 import 'package:finedger/providers/page_provider.dart';
+import 'package:finedger/screens/navigation_pages/budget_page.dart';
 import 'package:finedger/screens/navigation_pages/initial_account_creation.dart';
 import 'package:finedger/screens/navigation_pages/navigation.dart';
 import 'package:finedger/services/firebase_auth_services.dart';
@@ -15,7 +16,8 @@ import 'package:provider/provider.dart';
 import 'package:finedger/models/time_frame.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  const DashboardPage({super.key, this.onAddItems});
+  final Function(String)? onAddItems;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -25,19 +27,16 @@ class _DashboardPageState extends State<DashboardPage> {
   final _firebaseServices = FirebaseAuthService();
   final _auth = FirebaseAuth.instance;
   final _db = FirebaseFirestore.instance;
-  final _formKey = GlobalKey<FormState>();
   final _formKeyAccount = GlobalKey<FormState>();
   final _formKeyFund = GlobalKey<FormState>();
-  final _expenseNameController = TextEditingController();
-  final _categoryController = TextEditingController();
-  final _selectedDateController = TextEditingController();
-  final _amountController = TextEditingController();
   final _accountNameController = TextEditingController();
   final _fundAmountController = TextEditingController();
   String formatter = DateFormat('E, MMM d').format(DateTime.now());
   TextEditingController date = TextEditingController();
   String? selectedValue;
   int selectedIndex = 0;
+  List<String> accountList = [];
+
 
   void onTimeFrameSelected(int index) {
     setState(() {
@@ -58,15 +57,6 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  DateTime? selectedDate;
-  List<String> accountList = [];
-  final _dropDownItems = [
-    'Not on the budget',
-    'Food',
-    'Transportation',
-    'Nails',
-  ];
-
   Stream<List<Map<String, String>>> streamAccounts() {
     String userId = FirebaseAuth.instance.currentUser!.uid;
 
@@ -81,10 +71,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void clearFormFields() {
-    _expenseNameController.clear();
-    _categoryController.clear();
-    _selectedDateController.clear();
-    _amountController.clear();
     _accountNameController.clear();
     _fundAmountController.clear();
   }
@@ -209,7 +195,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               return const Text('No funds data available');
                             }
                             double funds = snapshot.data ?? 0.0;
-                            return Text('₱${funds.toStringAsFixed(2)}');
+                            return Text('₱${NumberFormat("#,##0.00", "en_US").format(funds)}');
                           },
                         ),
                         TextButton(
@@ -232,25 +218,13 @@ class _DashboardPageState extends State<DashboardPage> {
                         padding: const EdgeInsets.all(8.0),
                         child: Column(
                           children: [
-                            Row(
+                            const Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: <Widget>[
-                                const Text(
+                                Text(
                                   'Expenses',
                                   style: TextStyle(fontSize: 18.0),
                                 ),
-                                TextButton(
-                                  onPressed: () {
-                                    // showModalBottomSheet<dynamic>(
-                                    //   isScrollControlled: true,
-                                    //   context: context,
-                                    //   builder: (BuildContext context) {
-                                    //     return _buildBottomSheet(context, constraints.maxHeight);
-                                    //   },
-                                    // );
-                                  },
-                                  child: const Text('+ add new'),
-                                )
                               ],
                             ),
                             selectedAccount != null && selectedAccount.isNotEmpty
@@ -298,17 +272,13 @@ class _DashboardPageState extends State<DashboardPage> {
                         padding: const EdgeInsets.all(8.0),
                         child: Column(
                           children: [
-                            Row(
+                            const Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: <Widget>[
-                                const Text(
+                                Text(
                                   'Budget',
                                   style: TextStyle(fontSize: 18.0),
                                 ),
-                                TextButton(
-                                  onPressed: () => _showAddBudgetBottomSheet(context, constraints.maxHeight),
-                                  child: const Text('+ add new'),
-                                )
                               ],
                             ),
                             selectedAccount != null && selectedAccount.isNotEmpty
@@ -352,17 +322,13 @@ class _DashboardPageState extends State<DashboardPage> {
                         padding: const EdgeInsets.all(8.0),
                         child: Column(
                           children: [
-                            Row(
+                            const Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: <Widget>[
-                                const Text(
+                                Text(
                                   'Goals',
                                   style: TextStyle(fontSize: 18.0),
                                 ),
-                                TextButton(
-                                  onPressed: () {},
-                                  child: const Text('+ add new'),
-                                )
                               ],
                             ),
                             selectedAccount != null && selectedAccount.isNotEmpty
@@ -536,20 +502,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Future<DateTime?> _selectDate() async {
-    DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-
-    if (picked != null) {
-      _selectedDateController.text = DateFormat('MMMM d').format(picked);
-      return picked;
-    }
-    return null;
-  }
 
   void _showAddAccountBottomSheet(BuildContext context, double screenHeight) {
     showModalBottomSheet<dynamic>(
@@ -666,142 +618,5 @@ class _DashboardPageState extends State<DashboardPage> {
       },
     );
   }
-
-  void _showAddBudgetBottomSheet(BuildContext context, double screenHeight) {
-    showModalBottomSheet<dynamic>(
-      isScrollControlled: true,
-      context: context,
-      builder: (BuildContext context) {
-        return ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(40.0),
-            topRight: Radius.circular(40.0),
-          ),
-          child: SizedBox(
-            height: screenHeight * 0.8,
-            width: double.infinity,
-            child: Column(
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Opacity(
-                      opacity: 0.0,
-                      child: IconButton(
-                        icon: Icon(Icons.clear),
-                        onPressed: null,
-                      ),
-                    ),
-                    const Flexible(
-                      child: Text(
-                        'Add new budget',
-                        style: TextStyle(fontWeight: FontWeight.w400, fontSize: 17.0),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        FontAwesomeIcons.xmark,
-                        color: kGrayColor,
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Expenses name',
-                        style: TextStyle(color: kGrayColor, fontSize: 15.0),
-                      ),
-                      const SizedBox(height: 3.0),
-                      SizedBox(
-                        height: 40.0,
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            hintText: 'Description',
-                            hintStyle: const TextStyle(color: kGrayColor, fontWeight: FontWeight.w300, fontSize: 15.0),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                                borderSide: const BorderSide(color: kGrayColor)),
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                                borderSide: const BorderSide(color: kGrayColor)),
-                            border: const OutlineInputBorder(),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6.0),
-                      const Text(
-                        'Expenses date',
-                        style: TextStyle(color: kGrayColor, fontSize: 15.0),
-                      ),
-                      const SizedBox(height: 3.0),
-                      SizedBox(
-                        height: 40.0,
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            suffixIcon: const Icon(
-                              Icons.calendar_month_outlined,
-                              color: kGrayColor,
-                            ),
-                            hintText: 'Date',
-                            hintStyle: const TextStyle(color: kGrayColor, fontWeight: FontWeight.w300, fontSize: 15.0),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                                borderSide: const BorderSide(color: kGrayColor)),
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                                borderSide: const BorderSide(color: kGrayColor)),
-                            border: const OutlineInputBorder(),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                          ),
-                          onTap: () async {
-                            DateTime? pickeddate = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100));
-                            if (pickeddate != null) {
-                              setState(() {
-                                date.text = DateFormat('EEE, M/ d/ y').format(pickeddate);
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 13.0),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 45.0,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(11),
-                            ),
-                            backgroundColor: kBlueColor,
-                          ),
-                          onPressed: () {},
-                          child: const Text(
-                            'Add Expenses',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                )
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
+

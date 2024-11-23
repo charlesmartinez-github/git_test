@@ -7,10 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:syncfusion_flutter_charts/charts.dart' as charts;
 import '../../constants/constants.dart';
 import '../../services/firebase_auth_services.dart';
-import 'package:syncfusion_flutter_gauges/gauges.dart' as gauges;
 import 'dart:math';
 
 class GoalsPage extends StatefulWidget {
@@ -22,16 +20,12 @@ class GoalsPage extends StatefulWidget {
 
 class _GoalsPageState extends State<GoalsPage> {
   final _firebaseServices = FirebaseAuthService();
-  final _auth = FirebaseAuth.instance;
-  final _db = FirebaseFirestore.instance;
   final _formKey = GlobalKey<FormState>();
-  final _formKey1 = GlobalKey<FormState>();
   final _goalNameController = TextEditingController();
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
   final _targetAmountController = TextEditingController();
   final _savedAmountController = TextEditingController();
-  final _addFundsController = TextEditingController();
   String formatter = DateFormat('E, MMM d').format(DateTime.now());
   DateTime? selectedStartDate;
   DateTime? selectedEndDate;
@@ -80,7 +74,7 @@ class _GoalsPageState extends State<GoalsPage> {
                         isScrollControlled: true,
                         context: context,
                         builder: (BuildContext context) {
-                          return budgetModal(screenHeight, context);
+                          return addGoalModal(screenHeight, context);
                         },
                       );
                     },
@@ -102,7 +96,7 @@ class _GoalsPageState extends State<GoalsPage> {
     );
   }
 
-  ClipRRect budgetModal(double screenHeight, BuildContext context) {
+  ClipRRect addGoalModal(double screenHeight, BuildContext context) {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(40.0),
@@ -299,17 +293,73 @@ class _GoalsPageState extends State<GoalsPage> {
                           ),
                           backgroundColor: kBlueColor,
                         ),
-                        onPressed: () {
-                          int budgetStartDate = selectedStartDate!.millisecondsSinceEpoch;
-                          int budgetEndDate = selectedEndDate!.millisecondsSinceEpoch;
-                          double amount = double.parse(_targetAmountController.text.replaceAll(",", ""));
+                        onPressed: () async {
+                          // Validate the form fields
                           if (_formKey.currentState!.validate()) {
-                            _firebaseServices.addGoal(
+                            // Check if the start and end dates are properly selected
+                            if (selectedStartDate == null) {
+                              // Show an error if the start date is not selected
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Please select a start date for the goal.")),
+                              );
+                              return;
+                            }
+
+                            if (selectedEndDate == null) {
+                              // Show an error if the end date is not selected
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Please select an end date for the goal.")),
+                              );
+                              return;
+                            }
+
+                            // Try to parse the target amount
+                            double amount;
+                            String amountText = _targetAmountController.text.replaceAll(",", "");
+                            try {
+                              amount = double.parse(amountText);
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Please enter a valid target amount.")),
+                              );
+                              return;
+                            }
+
+                            // If everything is valid, proceed to add the goal
+                            int budgetStartDate = selectedStartDate!.millisecondsSinceEpoch;
+                            int budgetEndDate = selectedEndDate!.millisecondsSinceEpoch;
+
+                            await _firebaseServices.addGoal(
                                 context, _goalNameController.text, budgetStartDate, budgetEndDate, amount);
+
+                            // Clear the form fields after successful addition
                             clearFormFields();
-                            Navigator.pop(context);
+
+                            // Show a success dialog
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Goal Added Successfully!'),
+                                  content: const Text(
+                                    'Congratulations on taking the first step towards your goal! Keep up the great work.',
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop(); // Close the dialog
+                                        Navigator.of(context).pop(); // Close the add goal modal
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
                           }
                         },
+
+
                         child: const Text(
                           'Create goal',
                           style: TextStyle(color: Colors.white),
