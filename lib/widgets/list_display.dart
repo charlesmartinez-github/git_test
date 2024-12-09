@@ -98,6 +98,14 @@ class BudgetListWidget extends StatefulWidget {
 }
 
 class _BudgetListWidgetState extends State<BudgetListWidget> {
+  final TextEditingController _percentageController = TextEditingController();
+
+  @override
+  void dispose() {
+    _percentageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
@@ -147,8 +155,8 @@ class _BudgetListWidgetState extends State<BudgetListWidget> {
                 child: Card(
                   color: Colors.white,
                   elevation: 4.0,
-                  shadowColor: progressColor,
-                  surfaceTintColor: progressColor,
+                  shadowColor: isBudgetMaxed || isBudgetExpired ? Colors.red : progressColor,
+                  surfaceTintColor: isBudgetMaxed || isBudgetExpired ? Colors.red : Colors.transparent,
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
@@ -190,96 +198,162 @@ class _BudgetListWidgetState extends State<BudgetListWidget> {
                           subtitle: Text(
                             'Spending: ₱${NumberFormat("#,##0.00", "en_US").format(spentAmount)}\nBudget: ₱${NumberFormat("#,##0.00", "en_US").format(amount)}',
                           ),
-                          trailing: (isBudgetExpired || isBudgetMaxed)
+                          trailing: (isBudgetExpired && isBudgetMaxed)
                               ? Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.refresh, color: Colors.green),
-                                      onPressed: () async {
-                                        // Show a confirmation dialog before renewing
-                                        bool? confirmRenew = await showDialog<bool>(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: const Text('Renew budget?'),
-                                              content: const Text(
-                                                  'This will reset current spending and set new start and end date.'),
-                                              actions: <Widget>[
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop(false); // Cancel renew
-                                                  },
-                                                  child: const Text('Cancel'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop(true); // Confirm renew
-                                                  },
-                                                  child: const Text('Renew'),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-
-                                        // Proceed with renewal if confirmed
-                                        if (confirmRenew == true) {
-                                          // Calculate new start and end date
-                                          DateTime newStartDate = DateTime.now();
-                                          Duration duration = endDate.difference(startDate);
-                                          DateTime newEndDate = newStartDate.add(duration);
-
-                                          // Update the budget with the renewed values
-                                          await widget.firebaseServices.updateBudget(
-                                            widget.selectedAccount!,
-                                            budget['id'],
-                                            {
-                                              'spentAmount': 0.0,
-                                              'startDate': newStartDate.millisecondsSinceEpoch,
-                                              'endDate': newEndDate.millisecondsSinceEpoch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.refresh, color: Colors.green),
+                                onPressed: () async {
+                                  // Show a confirmation dialog before renewing
+                                  bool? confirmRenew = await showDialog<bool>(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text('Renew budget?'),
+                                        content: const Text(
+                                            'This will reset current spending and set new start and end date.'),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop(false); // Cancel renew
                                             },
-                                          );
-                                        }
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete, color: Color(0xFFf94252)),
-                                      onPressed: () async {
-                                        // Show a confirmation dialog before deleting
-                                        bool? confirmDelete = await showDialog<bool>(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: const Text('Delete budget?'),
-                                              content: const Text('This cannot be undone.'),
-                                              actions: <Widget>[
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop(false); // Cancel delete
-                                                  },
-                                                  child: const Text('Cancel'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop(true); // Confirm delete
-                                                  },
-                                                  child: const Text('Delete'),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop(true); // Confirm renew
+                                            },
+                                            child: const Text('Renew'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
 
-                                        // Proceed with deletion if confirmed
-                                        if (confirmDelete == true) {
-                                          await widget.firebaseServices
-                                              .deleteBudget(widget.selectedAccount!, budget['id']);
-                                        }
+                                  // Proceed with renewal if confirmed
+                                  if (confirmRenew == true) {
+                                    // Calculate new start and end date
+                                    DateTime newStartDate = DateTime.now();
+                                    Duration duration = endDate.difference(startDate);
+                                    DateTime newEndDate = newStartDate.add(duration);
+
+                                    // Update the budget with the renewed values
+                                    await widget.firebaseServices.updateBudget(
+                                      widget.selectedAccount!,
+                                      budget['id'],
+                                      {
+                                        'spentAmount': 0.0,
+                                        'startDate': newStartDate.millisecondsSinceEpoch,
+                                        'endDate': newEndDate.millisecondsSinceEpoch,
                                       },
+                                    );
+                                  }
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Color(0xFFf94252)),
+                                onPressed: () async {
+                                  // Show a confirmation dialog before deleting
+                                  bool? confirmDelete = await showDialog<bool>(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text('Delete budget?'),
+                                        content: const Text('This cannot be undone.'),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop(false); // Cancel delete
+                                            },
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop(true); // Confirm delete
+                                            },
+                                            child: const Text('Delete'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+
+                                  // Proceed with deletion if confirmed
+                                  if (confirmDelete == true) {
+                                    await widget.firebaseServices
+                                        .deleteBudget(widget.selectedAccount!, budget['id']);
+                                  }
+                                },
+                              ),
+                            ],
+                          )
+                              : (isBudgetExpired && !isBudgetMaxed)
+                              ? IconButton(
+                            icon: const Icon(Icons.swap_horiz, color: Colors.blue),
+                            onPressed: () {
+                              // Open modal bottom sheet for transferring funds
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (BuildContext context) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                                      left: 20.0,
+                                      right: 20.0,
+                                      top: 20.0,
                                     ),
-                                  ],
-                                )
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        TextFormField(
+                                          controller: _percentageController,
+                                          keyboardType: TextInputType.number,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Enter percentage for prioritized goals',
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20.0),
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            double remainingFunds = amount - spentAmount;
+                                            double? percentage = double.tryParse(_percentageController.text);
+
+                                            if (percentage == null || percentage < 0 || percentage > 100) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Please enter a valid percentage between 0 and 100.'),
+                                                ),
+                                              );
+                                              return;
+                                            }
+
+                                            // Distribute funds to goals
+                                            await widget.firebaseServices.distributeFundsToGoals(
+                                              widget.selectedAccount!,
+                                              remainingFunds,
+                                              percentage,
+                                            );
+
+                                            // Delete the budget after transferring funds
+                                            await widget.firebaseServices.deleteBudget(
+                                              widget.selectedAccount!,
+                                              budget['id'],
+                                            );
+
+                                            Navigator.pop(context);
+                                          },
+                                          child: const Text('Distribute Funds'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          )
                               : null,
                         ),
                         Row(
@@ -329,6 +403,7 @@ class _BudgetListWidgetState extends State<BudgetListWidget> {
     );
   }
 }
+
 
 class GoalsListWidget extends StatefulWidget {
   final FirebaseAuthService firebaseServices;
@@ -450,6 +525,15 @@ class _GoalsListWidgetState extends State<GoalsListWidget> {
                 return const Center(child: Text("No data available"));
               } else {
                 final allItems = snapshot.data!;
+                allItems.sort((a, b) {
+                  final aData = a.data() as Map<String, dynamic>;
+                  final bData = b.data() as Map<String, dynamic>;
+                  final aPriority = aData['isPrioritized'] ?? false;
+                  final bPriority = bData['isPrioritized'] ?? false;
+                  if (aPriority && !bPriority) return -1;
+                  if (!aPriority && bPriority) return 1;
+                  return 0;
+                });
                 final items = widget.showLatestOnly ? allItems.take(2).toList() : allItems;
 
                 return ListView.builder(
@@ -620,6 +704,9 @@ class _GoalsListWidgetState extends State<GoalsListWidget> {
                               ListTile(
                                 dense: true,
                                 subtitle: Text('Start Date: $textStartDate \nEnd Date: $textEndDate'),
+                                trailing: itemData['isPrioritized'] == true
+                                    ? const Icon(Icons.star, color: Colors.amber)
+                                    : null,
                               ),
                             ],
                           ),

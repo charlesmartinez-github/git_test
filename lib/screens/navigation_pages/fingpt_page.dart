@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,9 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/services.dart';       // For Clipboard
-import 'package:share_plus/share_plus.dart';  // For sharing content
-
+import 'package:flutter/services.dart'; // For Clipboard
+import 'package:share_plus/share_plus.dart'; // For sharing content
 
 class FinGPT extends StatefulWidget {
   const FinGPT({super.key});
@@ -35,19 +35,16 @@ class _FinGPTState extends State<FinGPT> {
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({Key? key}) : super(key: key);
+  const ChatScreen({super.key});
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ImagePicker picker = ImagePicker();
   final Dio _dio = Dio();
-
-
-
 
   List<Map<String, dynamic>> messages = [];
   List<Map<String, dynamic>> conversationHistory = [];
@@ -63,9 +60,6 @@ class _ChatScreenState extends State<ChatScreen> {
   bool showSuggestions = true;
   bool _showInputField = true;
 
-
-
-
   late AudioPlayer _audioPlayer;
   bool _isUploadingImage = false; // Add this line
   bool _isProcessingSpeech = false; // Separate from _isProcessing
@@ -73,15 +67,10 @@ class _ChatScreenState extends State<ChatScreen> {
   int _messageIdCounter = 0;
   int? _playingMessageId; // ID of the message being played
 
-
-
-
   late FlutterSoundRecorder _audioRecorder;
   String _audioFilePath = '';
   bool _isRecording = false;
   String _transcription = '';
-
-
 
   static const String apiUrl = "https://api.openai.com/v1/chat/completions";
   static const String apiKey =
@@ -96,17 +85,12 @@ class _ChatScreenState extends State<ChatScreen> {
         "question": "Can you list your variable monthly expenses like groceries and entertainment?",
         "key": "variableExpenses"
       },
-      {
-        "question": "Do you currently pay any loans or debts?",
-        "key": "debtQa"
-      }
-      ,
+      {"question": "Do you currently pay any loans or debts?", "key": "debtQa"},
     ],
     "Analyze my spending habits and identify areas where I can cut back.": [
-      {"question": "What is your total monthly income after taxes?",
-        "key": "totalMonthlyIncomeAfterTaxes"
-      },
-      {"question": "Do you have any additional sources of income (bonuses, freelance work, etc.)?",
+      {"question": "What is your total monthly income after taxes?", "key": "totalMonthlyIncomeAfterTaxes"},
+      {
+        "question": "Do you have any additional sources of income (bonuses, freelance work, etc.)?",
         "key": "additionalIncomeSources"
       },
       {
@@ -117,36 +101,15 @@ class _ChatScreenState extends State<ChatScreen> {
         "question": "Are there any subscriptions or memberships you regularly pay for?",
         "key": "subscriptionsOrMemberships"
       },
-      {
-        "question": "How much do you typically spend on groceries each month?",
-        "key": "monthlyGroceries"
-      },
-      {
-        "question": "What areas would you like to focus on cutting back?",
-        "key": "cutbackAreas"
-      },
+      {"question": "How much do you typically spend on groceries each month?", "key": "monthlyGroceries"},
+      {"question": "What areas would you like to focus on cutting back?", "key": "cutbackAreas"},
     ],
     "Set up a savings goal and create a plan to reach it.": [
       {"question": "What is your savings goal amount?", "key": "savingsGoal"},
       {"question": "In how many months would you like to achieve this goal?", "key": "goalMonths"},
-      {
-        "question": "How much can you save monthly toward this goal?",
-        "key": "monthlySavings"
-      },
+      {"question": "How much can you save monthly toward this goal?", "key": "monthlySavings"},
     ],
   };
-
-
-
-
-
-
-
-
-
-
-
-
 
   List<Map<String, String>>? currentConversationFlow;
   int currentQuestionIndex = 0;
@@ -169,23 +132,17 @@ class _ChatScreenState extends State<ChatScreen> {
     _audioPlayer = AudioPlayer();
   }
 
-
   Future<void> _initAudioRecorder() async {
     await _audioRecorder.openRecorder();
   }
 
-
-
-
-
-
-  Future<void> generateSpeech(String text,int msgId) async {
+  Future<void> generateSpeech(String text, int msgId) async {
     setState(() {
       _isProcessingSpeech = true;
       _playingMessageId = msgId; // Set the current playing message ID
     });
 
-    final String apiUrl = "https://api.openai.com/v1/audio/speech";
+    const String apiUrl = "https://api.openai.com/v1/audio/speech";
 
     try {
       final response = await http.post(
@@ -223,7 +180,7 @@ class _ChatScreenState extends State<ChatScreen> {
         throw Exception("Failed to generate speech: ${response.body}");
       }
     } catch (e) {
-      print("Error: $e");
+      log("Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error generating speech: $e")),
       );
@@ -234,8 +191,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-
-
   void stopSpeech() async {
     await _audioPlayer.stop();
     setState(() {
@@ -243,8 +198,6 @@ class _ChatScreenState extends State<ChatScreen> {
       _playingMessageId = null;
     });
   }
-
-
 
   Future<void> _saveConversation(String title) async {
     final prefs = await SharedPreferences.getInstance();
@@ -275,15 +228,13 @@ class _ChatScreenState extends State<ChatScreen> {
     final savedConversations = prefs.getStringList('conversations') ?? [];
 
     setState(() {
-      conversationHistory = savedConversations
-          .map((json) => jsonDecode(json) as Map<String, dynamic>)
-          .toList();
+      conversationHistory = savedConversations.map((json) => jsonDecode(json) as Map<String, dynamic>).toList();
     });
   }
 
   Future<void> sendMessage(String message) async {
     setState(() {
-      messages.add({"id": _messageIdCounter++,"role": "user", "content": message, "isImage": false});
+      messages.add({"id": _messageIdCounter++, "role": "user", "content": message, "isImage": false});
       _controller.clear(); // Clear the TextField
     });
     showSuggestions = false;
@@ -331,14 +282,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
         // Save the conversation
         if (currentConversationIndex != null) {
-          conversationHistory[currentConversationIndex!]['messages'] =
-              jsonEncode(messages);
+          conversationHistory[currentConversationIndex!]['messages'] = jsonEncode(messages);
         } else {
           // Create a new conversation if it's the first message
           final title = await _generateSummaryTitle(response);
           await _saveConversation(title);
-          currentConversationIndex =
-              conversationHistory.length - 1; // Set as current
+          currentConversationIndex = conversationHistory.length - 1; // Set as current
         }
       } catch (error) {
         _showErrorSnackBar("Failed to send message: $error");
@@ -356,41 +305,35 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (userResponses.containsKey('income') &&
         userResponses.containsKey('fixedExpenses') &&
-        userResponses.containsKey('variableExpenses')&&
-        userResponses.containsKey('debtQa')
-
-    ) {
-      prompt = "Create a budget like you will need to balance the spendings of the user, like reccomend how does user spend their money on based on the following:\n";
+        userResponses.containsKey('variableExpenses') &&
+        userResponses.containsKey('debtQa')) {
+      prompt =
+          "Create a budget like you will need to balance the spendings of the user, like reccomend how does user spend their money on based on the following:\n";
       prompt += "Total Monthly Income: ${userResponses['income']}\n";
       prompt += "Fixed Monthly Expenses: ${userResponses['fixedExpenses']}\n";
-      prompt +=
-      "Variable Monthly Expenses: ${userResponses['variableExpenses']}\n";
+      prompt += "Variable Monthly Expenses: ${userResponses['variableExpenses']}\n";
       prompt += "Paying loans or debts?: ${userResponses['debtQa']}\n";
     } else if (userResponses.containsKey('totalMonthlyIncomeAfterTaxes') &&
         userResponses.containsKey('transportationAllocation') &&
         userResponses.containsKey('additionalIncomeSources') &&
         userResponses.containsKey('subscriptionsOrMemberships') &&
         userResponses.containsKey('monthlyGroceries') &&
-        userResponses.containsKey('cutbackAreas'))
-    {
+        userResponses.containsKey('cutbackAreas')) {
       prompt =
-      "Analyze my spending habits and identify areas where I can cut back, you will need to balance the spending of the user, like recommend how does user spend their money based on the following information:\n";
+          "Analyze my spending habits and identify areas where I can cut back, you will need to balance the spending of the user, like recommend how does user spend their money based on the following information:\n";
       prompt += "Total Monthly Income After Taxes: ${userResponses['totalMonthlyIncomeAfterTaxes']}\n";
       prompt += "Transportation Allocation: ${userResponses['transportationAllocation']}\n";
       prompt += "Additional Income Sources: ${userResponses['additionalIncomeSources']}\n";
       prompt += "Subscriptions or Memberships: ${userResponses['subscriptionsOrMemberships']}\n";
       prompt += "Monthly Groceries: ${userResponses['monthlyGroceries']}\n";
       prompt += "Cutback Areas: ${userResponses['cutbackAreas']}\n";
-
     } else if (userResponses.containsKey('savingsGoal') &&
         userResponses.containsKey('goalMonths') &&
         userResponses.containsKey('monthlySavings')) {
-      prompt =
-      "Set up a savings goal and create a plan to reach it based on the following information:\n";
+      prompt = "Set up a savings goal and create a plan to reach it based on the following information:\n";
       prompt += "Savings Goal Amount: ${userResponses['savingsGoal']}\n";
       prompt += "Goal Timeline (Months): ${userResponses['goalMonths']}\n";
-      prompt +=
-      "Monthly Savings Amount: ${userResponses['monthlySavings']}\n";
+      prompt += "Monthly Savings Amount: ${userResponses['monthlySavings']}\n";
     } else {
       prompt = "Assist me with the following information:\n";
       userResponses.forEach((key, value) {
@@ -415,14 +358,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
       // Save the conversation
       if (currentConversationIndex != null) {
-        conversationHistory[currentConversationIndex!]['messages'] =
-            jsonEncode(messages);
+        conversationHistory[currentConversationIndex!]['messages'] = jsonEncode(messages);
       } else {
         // Create a new conversation if it's the first message
         final title = await _generateSummaryTitle(response);
         await _saveConversation(title);
-        currentConversationIndex =
-            conversationHistory.length - 1; // Set as current
+        currentConversationIndex = conversationHistory.length - 1; // Set as current
       }
     } catch (error) {
       _showErrorSnackBar("Failed to send structured prompt: $error");
@@ -432,8 +373,6 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     }
   }
-
-
 
   Future<String> _sendTextRequestToGPT(String message) async {
     try {
@@ -450,7 +389,8 @@ class _ChatScreenState extends State<ChatScreen> {
           "messages": [
             {
               "role": "system",
-              "content": "You're a finance assistance app, based in the Philippines. Your goal is to help users manage their finances. Keep your responses concise and clear. Politely decline if the user asks for topics unrelated to finance."
+              "content":
+                  "You're a finance assistance app, based in the Philippines. Your goal is to help users manage their finances. Keep your responses concise and clear. Politely decline if the user asks for topics unrelated to finance."
             },
             ...messages.map((msg) {
               if (msg['isImage'] == true && msg['role'] == 'user') {
@@ -472,7 +412,6 @@ class _ChatScreenState extends State<ChatScreen> {
             },
           ],
         }),
-
       );
 
       if (response.statusCode == 200) {
@@ -484,11 +423,6 @@ class _ChatScreenState extends State<ChatScreen> {
       throw Exception("Error in text request: $error");
     }
   }
-
-
-
-
-
 
   Future<String> _generateSummaryTitle(String response) async {
     try {
@@ -503,10 +437,7 @@ class _ChatScreenState extends State<ChatScreen> {
         data: jsonEncode({
           "model": "gpt-4",
           "messages": [
-            {
-              "role": "system",
-              "content": "Summarize the following text into a brief title."
-            },
+            {"role": "system", "content": "Summarize the following text into a brief title."},
             {"role": "user", "content": response},
           ],
         }),
@@ -535,7 +466,6 @@ class _ChatScreenState extends State<ChatScreen> {
       // No need to set _isUploadingImage to false here
     }
   }
-
 
   Future<void> analyzeImage(File image) async {
     setState(() {
@@ -570,10 +500,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-
-
-
-
   Future<String> _sendImageToGPT4(File image) async {
     final String base64Image = await _encodeImage(image);
 
@@ -598,9 +524,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
                 {
                   "type": "image_url",
-                  "image_url": {
-                    "url": "data:image/jpeg;base64,$base64Image"
-                  },
+                  "image_url": {"url": "data:image/jpeg;base64,$base64Image"},
                 },
               ],
             }
@@ -630,9 +554,6 @@ class _ChatScreenState extends State<ChatScreen> {
       await _stopRecording();
     }
   }
-
-
-
 
   // New method to start recording
   Future<void> _startRecording() async {
@@ -691,12 +612,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-
-
-
-
-
-
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -713,9 +628,10 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
+    double suggestionsLeftPadding = 5.0; // Adjust as needed
+    double suggestionsTopPadding = 450; // Adjust as needed
     return Scaffold(
       appBar: AppBar(
         leading: Builder(
@@ -779,15 +695,22 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
             Expanded(
-              child: ListView(
+              child: ListView.separated(
                 padding: EdgeInsets.zero,
-                children: conversationHistory.map((conversation) {
+                itemCount: conversationHistory.length,
+                separatorBuilder: (context, index) => const Divider(
+                  color: Colors.grey,
+                  thickness: 1.0,
+                  indent: 16.0,
+                  endIndent: 16.0,
+                ),
+                itemBuilder: (context, index) {
+                  final conversation = conversationHistory[index];
                   return ListTile(
                     title: Text(conversation['title']),
                     onTap: () {
                       setState(() {
-                        currentConversationIndex =
-                            conversationHistory.indexOf(conversation);
+                        currentConversationIndex = index;
                         messages = List<Map<String, dynamic>>.from(
                           jsonDecode(conversation['messages']),
                         );
@@ -800,7 +723,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       Navigator.pop(context);
                     },
                   );
-                }).toList(),
+                },
               ),
             ),
           ],
@@ -841,83 +764,76 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                         child: msg['isImage']
                             ? (isUserMessage
-                            ? Image.file(
-                          msg['imageFile'], // Use 'imageFile' to display the image
-                          height: 150,
-                          width: 150,
-                        )
+                                ? Image.file(
+                                    msg['imageFile'], // Use 'imageFile' to display the image
+                                    height: 150,
+                                    width: 150,
+                                  )
+                                : Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Image.file(
+                                        msg['content'],
+                                        height: 150,
+                                        width: 150,
+                                      ),
+                                      // Add icons if needed
+                                    ],
+                                  ))
                             : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Image.file(
-                              msg['content'],
-                              height: 150,
-                              width: 150,
-                            ),
-                            // Add icons if needed
-                          ],
-                        ))
-                            : Column(
-                          crossAxisAlignment: isUserMessage
-                              ? CrossAxisAlignment.end
-                              : CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              msg['content'],
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 16.0,
-                              ),
-                              textAlign:
-                              isUserMessage ? TextAlign.right : TextAlign.left,
-                            ),
-                            if (msg['role'] == 'assistant')
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: isUserMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                                 children: [
-                                  // Volume Icon
-                                  IconButton(
-                                    icon: Icon(
-                                      _playingMessageId == msg['id']
-                                          ? Icons.stop
-                                          : Icons.volume_up,
+                                  Text(
+                                    msg['content'],
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 16.0,
                                     ),
-                                    onPressed: () {
-                                      if (_playingMessageId == msg['id']) {
-                                        stopSpeech();
-                                      } else {
-                                        generateSpeech(msg['content'], msg['id']);
-                                      }
-                                    },
+                                    textAlign: isUserMessage ? TextAlign.right : TextAlign.left,
                                   ),
-                                  // Copy Icon
-                                  IconButton(
-                                    icon: const Icon(Icons.copy),
-                                    onPressed: () {
-                                      Clipboard.setData(
-                                          ClipboardData(text: msg['content']));
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text("Copied to clipboard")),
-                                      );
-                                    },
-                                  ),
-                                  // Share Icon
-                                  IconButton(
-                                    icon: const Icon(Icons.share),
-                                    onPressed: () {
-                                      Share.share(msg['content']);
-                                    },
-                                  ),
+                                  if (msg['role'] == 'assistant')
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Volume Icon
+                                        IconButton(
+                                          icon: Icon(
+                                            _playingMessageId == msg['id'] ? Icons.stop : Icons.volume_up,
+                                          ),
+                                          onPressed: () {
+                                            if (_playingMessageId == msg['id']) {
+                                              stopSpeech();
+                                            } else {
+                                              generateSpeech(msg['content'], msg['id']);
+                                            }
+                                          },
+                                        ),
+                                        // Copy Icon
+                                        IconButton(
+                                          icon: const Icon(Icons.copy),
+                                          onPressed: () {
+                                            Clipboard.setData(ClipboardData(text: msg['content']));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text("Copied to clipboard")),
+                                            );
+                                          },
+                                        ),
+                                        // Share Icon
+                                        IconButton(
+                                          icon: const Icon(Icons.share),
+                                          onPressed: () {
+                                            Share.share(msg['content']);
+                                          },
+                                        ),
+                                      ],
+                                    ),
                                 ],
                               ),
-                          ],
-                        ),
                       ),
                     );
                   },
                 ),
               ),
-
 
               if (_isProcessing || _isProcessingSpeech)
                 const Padding(
@@ -972,9 +888,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                       color: _isRecording ? Colors.red : null,
                                     ),
                                     onPressed: _listen,
-                                    tooltip: _isRecording
-                                        ? "Stop recording"
-                                        : "Start recording",
+                                    tooltip: _isRecording ? "Stop recording" : "Start recording",
                                   ),
                                 ],
                               ),
@@ -988,10 +902,10 @@ class _ChatScreenState extends State<ChatScreen> {
                         onPressed: _isProcessing
                             ? null
                             : () {
-                          if (_controller.text.isNotEmpty) {
-                            sendMessage(_controller.text);
-                          }
-                        },
+                                if (_controller.text.isNotEmpty) {
+                                  sendMessage(_controller.text);
+                                }
+                              },
                       ),
                     ],
                   ),
@@ -999,34 +913,33 @@ class _ChatScreenState extends State<ChatScreen> {
             ],
           ),
 
-
-          // Floating Suggestions Positioned Above the Input Field
+          // Combined Padding and Align for Suggestions Section
           if (showSuggestions && !isStructuredConversation)
-            Positioned(
-              bottom: 70,
-              right: 10,
-              left: 10,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: floatingSuggestions.map((suggestion) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: ElevatedButton(
+            Padding(
+              padding: EdgeInsets.only(
+                left: suggestionsLeftPadding,
+                top: suggestionsTopPadding,
+              ),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  child: Wrap(
+                    spacing: 8.0,
+                    runSpacing: 4.0,
+                    children: floatingSuggestions.map((suggestion) {
+                      return ElevatedButton(
                         onPressed: () {
                           setState(() {
                             // Initialize the structured conversation
-                            currentConversationFlow =
-                            conversationFlows[suggestion];
+                            currentConversationFlow = conversationFlows[suggestion];
                             currentQuestionIndex = 0;
                             userResponses = {};
                             isStructuredConversation = true;
                             messages.add({
                               "id": _messageIdCounter++,
                               "role": "assistant",
-                              "content":
-                              currentConversationFlow![currentQuestionIndex]
-                              ["question"]!,
+                              "content": currentConversationFlow![currentQuestionIndex]["question"]!,
                               "isImage": false,
                             });
                           });
@@ -1039,9 +952,9 @@ class _ChatScreenState extends State<ChatScreen> {
                           suggestion,
                           style: const TextStyle(fontSize: 12.0),
                         ),
-                      ),
-                    );
-                  }).toList(),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
             ),

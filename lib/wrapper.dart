@@ -1,4 +1,5 @@
 import 'package:finedger/providers/page_provider.dart';
+import 'package:finedger/screens/navigation_pages/initial_account_creation.dart';
 import 'package:finedger/screens/navigation_pages/navigation.dart';
 import 'package:finedger/screens/onboarding_pages/onboarding_page1.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,6 +29,7 @@ class Wrapper extends StatelessWidget {
             } else {
               return Consumer<PageProvider>(
                 builder: (context, pageProvider, child) {
+                  //Navigation(passedPageIndex: pageProvider.currentPageIndex)
                   return Navigation(passedPageIndex: pageProvider.currentPageIndex);
                 },
               );

@@ -100,12 +100,12 @@ class FirebaseAuthService {
   }
 
   Future<void> addExpense(
-    BuildContext context,
-    double amount,
-    String? category,
-    String description,
-    int date,
-  ) async {
+      BuildContext context,
+      double amount,
+      String? category,
+      String description,
+      int date,
+      ) async {
     String userId = _auth.currentUser!.uid;
     String? selectedAccount = context.read<AccountProvider>().selectedAccount;
 
@@ -121,14 +121,6 @@ class FirebaseAuthService {
       'amount': amount,
       'timeStamp': FieldValue.serverTimestamp(),
     });
-
-    // Deduct the expense amount from the account funds
-    await _db
-        .collection('users')
-        .doc(userId)
-        .collection('accounts')
-        .doc(selectedAccount)
-        .update({'funds': FieldValue.increment(-amount)});
 
     // Check if the expense category matches a budget's description in the selected account
     if (category != null) {
@@ -146,7 +138,7 @@ class FirebaseAuthService {
         final budgetDoc = budgetQuerySnapshot.docs.first;
 
         // Get the current spentAmount
-        double currentSpentAmount = (budgetDoc['spentAmount'] as num).toDouble() ?? 0.00;
+        double currentSpentAmount = (budgetDoc['spentAmount'] as num).toDouble();
 
         // Update the spentAmount by adding the expense amount
         await _db
@@ -204,14 +196,44 @@ class FirebaseAuthService {
     });
   }
 
-  Future<void> addBudget(
-    String selectedAccount,
-    String description,
-    int startDate,
-    int endDate,
-    double amount,
-  ) async {
+  Future<bool> addBudget(
+      BuildContext context,
+      String selectedAccount,
+      String description,
+      int startDate,
+      int endDate,
+      double amount,
+      ) async {
     String userId = _auth.currentUser!.uid;
+
+    // Get the current funds of the account
+    DocumentSnapshot accountSnapshot = await _db.collection('users').doc(userId).collection('accounts').doc(selectedAccount).get();
+    double currentFunds = (accountSnapshot['funds'] as num).toDouble();
+
+    // Check if there are enough funds for the budget amount
+    if (currentFunds < amount) {
+      // Show dialog indicating insufficient funds
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Insufficient Funds'),
+            content: const Text('You do not have enough funds to create this budget.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return false;
+    }
+
+    // If there are enough funds, proceed to add the budget
     Random random = Random();
     int colorValue = Color.fromARGB(
       255,
@@ -219,6 +241,14 @@ class FirebaseAuthService {
       random.nextInt(256),
       random.nextInt(256),
     ).value;
+
+    // Deduct the budget amount from the account's funds
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccount)
+        .update({'funds': FieldValue.increment(-amount)});
 
     // Add the budget document to the selected account
     await _db.collection('users').doc(userId).collection('accounts').doc(selectedAccount).collection('budgets').add({
@@ -230,7 +260,12 @@ class FirebaseAuthService {
       'color': colorValue,
       'timeStamp': FieldValue.serverTimestamp(),
     });
+
+    return true;
   }
+
+
+
 
   Future<void> updateBudget(
     String selectedAccount,
@@ -436,6 +471,7 @@ class FirebaseAuthService {
     int startDate,
     int endDate,
     double targetAmount,
+    bool isPrioritized
   ) async {
     String userId = _auth.currentUser!.uid;
     String? selectedAccount = context.read<AccountProvider>().selectedAccount;
@@ -459,9 +495,24 @@ class FirebaseAuthService {
       'amountSaved': 0.00,
       'color': colorValue,
       'targetAmount': targetAmount,
+      'isPrioritized': isPrioritized,
       'timeStamp': FieldValue.serverTimestamp(),
     });
   }
+  Future<void> updateGoal(String selectedAccount, String goalId, Map<String, dynamic> updatedData) async {
+    String userId = _auth.currentUser!.uid;
+
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccount)
+        .collection('goals')
+        .doc(goalId)
+        .update(updatedData);
+  }
+
+
 
   Stream<List<DocumentSnapshot>> getUserGoalsListView(String selectedAccount) {
     String userId = _auth.currentUser!.uid;
@@ -474,7 +525,19 @@ class FirebaseAuthService {
         .collection('goals')
         .orderBy('timeStamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs);
+        .map((snapshot) => snapshot.docs)
+        .map((docs) {
+      docs.sort((a, b) {
+        final aData = a.data() as Map<String, dynamic>;
+        final bData = b.data() as Map<String, dynamic>;
+        final aPriority = aData['isPrioritized'] ?? false;
+        final bPriority = bData['isPrioritized'] ?? false;
+        if (aPriority && !bPriority) return -1;
+        if (!aPriority && bPriority) return 1;
+        return 0;
+      });
+      return docs;
+    });
   }
 
   Stream<List<DocumentSnapshot>> getGoalFundsHistory(String selectedAccount) {
@@ -539,14 +602,14 @@ class FirebaseAuthService {
         .snapshots();
   }
 
-  Future<void> createInitialAccount(BuildContext context, String accountName) async {
+  Future<void> createInitialAccount(BuildContext context, String accountName, double? accountFunds) async {
     String userId = _auth.currentUser!.uid;
     DocumentReference accountRef = _db.collection('users').doc(userId).collection('accounts').doc();
 
     // Add the account to Firestore
     await accountRef.set({
       'accountName': accountName,
-      'funds': 0,
+      'funds': accountFunds,
       'timeStamp': FieldValue.serverTimestamp(),
     });
 
@@ -563,6 +626,48 @@ class FirebaseAuthService {
       ),
     );
   }
+
+
+  Future<void> createAccount(BuildContext context, String accountName) async {
+    String userId = _auth.currentUser!.uid;
+    DocumentReference accountRef = _db.collection('users').doc(userId).collection('accounts').doc();
+
+    // Add the account to Firestore
+    await accountRef.set({
+      'accountName': accountName,
+      'funds': 0.0,
+      'timeStamp': FieldValue.serverTimestamp(),
+    });
+
+    // Set the newly created account as selected
+    context.read<AccountProvider>().setSelectedAccount(accountRef.id);
+
+    // // Navigate to the dashboard after successful creation
+    // Navigator.pushReplacement(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (BuildContext context) {
+    //       return const FinEdger();
+    //     },
+      //   ),
+    // );
+  }
+  Future<double?> getCurrentFunds(String selectedAccountId) async {
+    String userId = _auth.currentUser!.uid;
+    DocumentSnapshot accountSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('accounts')
+        .doc(selectedAccountId)
+        .get();
+
+    if (accountSnapshot.exists) {
+      return accountSnapshot['funds']?.toDouble() ?? 0.0;
+    }
+    return null;
+  }
+
+
 
   Stream<double> streamFunds(String accountId) {
     String userId = FirebaseAuth.instance.currentUser!.uid;
@@ -595,5 +700,91 @@ class FirebaseAuthService {
     }).catchError((error) {
       print("Failed to add funds: $error");
     });
+  }
+}
+extension FirebaseAuthServiceExtension on FirebaseAuthService {
+  Future<void> distributeFundsToGoals(String accountId, double remainingFunds, double percentage) async {
+    if (accountId.isEmpty) {
+      throw ArgumentError("Account ID cannot be null or empty");
+    }
+
+    // Get prioritized and non-prioritized goals
+    final prioritizedGoals = await getPrioritizedGoals(accountId);
+    final nonPrioritizedGoals = await getNonPrioritizedGoals(accountId);
+
+    double prioritizedAmount = remainingFunds * (percentage / 100);
+    double nonPrioritizedAmount = remainingFunds - prioritizedAmount;
+
+    // Distribute funds to prioritized goals
+    if (prioritizedGoals.isNotEmpty) {
+      double amountPerGoal = prioritizedAmount / prioritizedGoals.length;
+      for (var goal in prioritizedGoals) {
+        if (goal['id'] != null) {
+          await updateGoalFunds(accountId, goal['id'], amountPerGoal);
+        }
+      }
+    }
+
+    // Distribute funds to non-prioritized goals
+    if (nonPrioritizedGoals.isNotEmpty) {
+      double amountPerGoal = nonPrioritizedAmount / nonPrioritizedGoals.length;
+      for (var goal in nonPrioritizedGoals) {
+        if (goal['id'] != null) {
+          await updateGoalFunds(accountId, goal['id'], amountPerGoal);
+        }
+      }
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPrioritizedGoals(String accountId) async {
+    // Fetch prioritized goals from Firestore
+    final querySnapshot = await _db
+        .collection('users')
+        .doc(_auth.currentUser?.uid ?? '')
+        .collection('accounts')
+        .doc(accountId)
+        .collection('goals')
+        .where('isPrioritized', isEqualTo: true)
+        .get();
+
+    return querySnapshot.docs.map((doc) {
+      var data = doc.data() as Map<String, dynamic>;
+      data['id'] = doc.id; // Include the document ID
+      return data;
+    }).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getNonPrioritizedGoals(String accountId) async {
+    // Fetch non-prioritized goals from Firestore
+    final querySnapshot = await _db
+        .collection('users')
+        .doc(_auth.currentUser?.uid ?? '')
+        .collection('accounts')
+        .doc(accountId)
+        .collection('goals')
+        .where('isPrioritized', isEqualTo: false)
+        .get();
+
+    return querySnapshot.docs.map((doc) {
+      var data = doc.data() as Map<String, dynamic>;
+      data['id'] = doc.id; // Include the document ID
+      return data;
+    }).toList();
+  }
+
+  Future<void> updateGoalFunds(String accountId, String goalId, double amount) async {
+    if (goalId.isEmpty) {
+      throw ArgumentError("Goal ID cannot be null or empty");
+    }
+
+    // Update goal funds in Firestore
+    await _db
+        .collection('users')
+        .doc(_auth.currentUser?.uid ?? '')
+        .collection('accounts')
+        .doc(accountId)
+        .collection('goals')
+        .doc(goalId)
+        .update({'amountSaved': FieldValue.increment(amount)});
   }
 }

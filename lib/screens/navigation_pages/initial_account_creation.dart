@@ -18,6 +18,7 @@ class InitialAccountCreation extends StatefulWidget {
 
 class _InitialAccountCreationState extends State<InitialAccountCreation> {
   final _accountNameController = TextEditingController();
+  final _accountFundsController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final _firebase = FirebaseAuthService();
   @override
@@ -37,49 +38,61 @@ class _InitialAccountCreationState extends State<InitialAccountCreation> {
             children: <Widget>[
               Form(
                 key: _formKey,
-                child: TextFormField(
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return 'This field cannot be empty!';
-                    }
-                    return null;
-                  },
-                  controller: _accountNameController,
-                  enableSuggestions: true,
-                  autocorrect: true,
-                  decoration: InputDecoration(
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: const BorderSide(
-                        color: kBlueColor,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: const BorderSide(
-                        color: kBlueColor,
-                      ),
-                    ),
-                    fillColor: Colors.white,
-                    filled: true,
-                    border: const OutlineInputBorder(),
-                    hintText: 'Create a financial account',
-                    hintStyle: const TextStyle(color: kGrayColor, fontSize: 15.0),
-                    contentPadding: const EdgeInsets.fromLTRB(15.0, 8.0, 8.0, 8.0),
-                  ),
-                ),
+                child: Column(
+                  children: <Widget>[
+                    _initialAccountAndFunds(controller: _accountNameController, hintText: 'Create initial account', keyboardType: TextInputType.text),
+                    const SizedBox(height: 10.0,),
+                    _initialAccountAndFunds(controller: _accountFundsController, hintText: 'Enter your desired funds', keyboardType: TextInputType.number)
+                  ],
+                )
               ),
               const SizedBox(height: 15.0),
               SmallButton(
-                  buttonLabel: 'Save',
+                  buttonLabel: 'Create',
                   onPress: () {
                     if (_formKey.currentState!.validate()) {
-                      _firebase.createInitialAccount(context, _accountNameController.text);
+                      double accountFunds = double.tryParse(_accountFundsController.text.replaceAll(',', '')) ?? 0.0;
+                      _firebase.createInitialAccount(context, _accountNameController.text, accountFunds);
                     }
                   })
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _initialAccountAndFunds({required TextEditingController controller, required String hintText, required TextInputType keyboardType}) {
+    return TextFormField(
+      validator: (value) {
+        if (value!.isEmpty) {
+          return 'This field cannot be empty!';
+        }
+        return null;
+      },
+      controller: controller,
+      enableSuggestions: true,
+      autocorrect: true,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: const BorderSide(
+            color: kBlueColor,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: const BorderSide(
+            color: kBlueColor,
+          ),
+        ),
+        fillColor: Colors.white,
+        filled: true,
+        border: const OutlineInputBorder(),
+        hintText: hintText,
+        hintStyle: const TextStyle(color: kGrayColor, fontSize: 15.0),
+        contentPadding: const EdgeInsets.fromLTRB(15.0, 8.0, 8.0, 8.0),
       ),
     );
   }

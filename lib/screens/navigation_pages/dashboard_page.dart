@@ -144,6 +144,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               // Get the current selected account value
                               String? selectedAccount = context.watch<AccountProvider>().selectedAccount;
 
+
                               // If no account is selected yet, return an empty container temporarily
                               if (selectedAccount == null) {
                                 return const SizedBox
@@ -596,7 +597,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             onPressed: () {
                               if (_formKeyAccount.currentState!.validate()) {
-                                _firebaseServices.createInitialAccount(context, _accountNameController.text);
+                                _firebaseServices.createAccount(context, _accountNameController.text);
                                 _accountNameController.clear();
                                 Navigator.pop(context);
                               }

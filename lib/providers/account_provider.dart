@@ -5,8 +5,13 @@ class AccountProvider with ChangeNotifier {
 
   String? get selectedAccount => _selectedAccount;
 
-  void setSelectedAccount(String? account) {
+
+
+
+  void setSelectedAccount(String? account, ) {
     _selectedAccount = account;
     notifyListeners();
   }
 }
+
+

@@ -11,7 +11,6 @@ import '../../constants/constants.dart';
 import '../../services/firebase_auth_services.dart';
 import 'package:finedger/models/time_frame.dart';
 
-
 class ExpensesPage extends StatefulWidget {
   final List<String>? budgetCategories;
   const ExpensesPage({super.key, this.budgetCategories});
@@ -62,20 +61,18 @@ class _ExpensesPageState extends State<ExpensesPage> {
     DateTime now = DateTime.now();
     budgetDescriptions = snapshot.docs
         .where((doc) {
-      final spentAmount = doc['spentAmount'] as num;
-      final amount = doc['amount'] as num;
-      final endDate = doc['endDate'] as num?;
+          final spentAmount = doc['spentAmount'] as num;
+          final amount = doc['amount'] as num;
+          final endDate = doc['endDate'] as num?;
 
-      final isNotMaxedOut = spentAmount < amount;
-      final isNotExpired = endDate == null || endDate > now.millisecondsSinceEpoch;
+          final isNotMaxedOut = spentAmount < amount;
+          final isNotExpired = endDate == null || endDate > now.millisecondsSinceEpoch;
 
-      return isNotMaxedOut && isNotExpired;
-    })
+          return isNotMaxedOut && isNotExpired;
+        })
         .map((doc) => doc['description'] as String)
         .toList();
   }
-
-
 
   void onTimeFrameSelected(int index) {
     setState(() {
@@ -150,7 +147,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
                   )
                 ],
               ),
-              ExpenseChart(stream: _firebaseServices.expenseData(selectedAccount!), selectedTimeframe: selectedTimeframe),
+              ExpenseChart(
+                  stream: _firebaseServices.expenseData(selectedAccount!), selectedTimeframe: selectedTimeframe),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
@@ -233,14 +231,13 @@ class _ExpensesPageState extends State<ExpensesPage> {
               ),
               const SizedBox(height: 10.0),
               ExpenseListWidget(
-                  firebaseServices: _firebaseServices,
-                  selectedAccount: selectedAccount,
+                firebaseServices: _firebaseServices,
+                selectedAccount: selectedAccount,
               ),
             ],
           ),
         ),
       ),
-
     );
   }
 
@@ -498,7 +495,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
                                   builder: (BuildContext context) {
                                     return AlertDialog(
                                       title: const Text('Insufficient Funds'),
-                                      content: const Text('You do not have sufficient funds in the selected account to add this expense.'),
+                                      content: const Text(
+                                          'You do not have sufficient funds in the selected account to add this expense.'),
                                       actions: <Widget>[
                                         TextButton(
                                           onPressed: () {
@@ -514,8 +512,6 @@ class _ExpensesPageState extends State<ExpensesPage> {
                             }
                           }
                         },
-
-
                         child: const Text(
                           'Create expense',
                           style: TextStyle(color: Colors.white),
@@ -541,7 +537,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
     );
 
     if (picked != null) {
-      _selectedDateController.text = DateFormat('MMMM d').format(picked);
+      _selectedDateController.text = DateFormat('MMMM d, y').format(picked);
       return picked;
     }
     return null;
