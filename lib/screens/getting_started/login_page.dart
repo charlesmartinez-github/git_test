@@ -67,10 +67,11 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   children: <Widget>[
                     Image.asset(
-                      'images/finedger_logo.png',
-                      width: 200.0,
-                      height: 200.0,
+                      'images/Combined.png',
+                      width: 150.0,
+                      height: 150.0,
                     ),
+                    const SizedBox(height: 40.0),
                     LoginForm(
                       controller: _emailController,
                       validator: validateEmail,
@@ -129,7 +130,6 @@ class _LoginPageState extends State<LoginPage> {
                         Row(
                           children: [
                             Checkbox(
-
                               checkColor: Colors.white,
                               activeColor: const Color(0xff30437a),
                               value: isChecked,
